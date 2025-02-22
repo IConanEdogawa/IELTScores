@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us</title>
+    <link rel="stylesheet" href="styles.css">
+
+    <style>
+        .about-container {
+            width: 60%;
+            max-width: 600px;
+            margin: auto;
+            margin-top: 50px;
+            padding: 30px;
+            background: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .about-container h1 {
+            font-size: 28px;
+            color: #d90429;
+        }
+        
+        .about-container p {
+            font-size: 18px;
+            color: #333;
+            margin: 10px 0;
+        }
+        
+        .back-btn {
+            background: #d90429;
+            color: white;
+            font-size: 18px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        
+        .back-btn:hover {
+            background: #a1031f;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="about-container">
+        <h1>About the Project</h1>
+        <p>This website was created to provide a convenient tool for analyzing IELTS results.</p>
+        <p>We strive to make the evaluation process more visual and user-friendly for everyone.</p>
+        
+        <h2>Our Goal</h2>
+        <p>To make IELTS preparation more effective with a user-friendly graphical interface.</p>
+
+        <button onclick="goBack()" class="back-btn">Back</button>
+    </div>
+
+    <script>
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+</body>
+</html>

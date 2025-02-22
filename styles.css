@@ -1,0 +1,246 @@
+/* Soft Font */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600&display=swap');
+
+body {
+    font-family: 'Nunito', sans-serif;
+    background: linear-gradient(to right, #f8f9fa, #e9ecef);
+    text-align: center;
+    margin: 0;
+    padding: 0;
+}
+
+.header {
+    background: #d90429;
+    color: white;
+    font-size: 28px;
+    padding: 20px;
+    font-weight: bold;
+    border-radius: 0 0 10px 10px;
+}
+
+.container {
+    width: 40%;
+    max-width: 500px;
+    min-width: 300px;
+    margin: auto;
+    background: white;
+    padding: 30px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    margin-top: 20px;
+}
+
+.input-group {
+    margin: 15px 0;
+    text-align: left;
+}
+
+label {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.submit-btn, .remove-btn {
+    background: #d90429;
+    color: white;
+    font-size: 18px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%;
+    transition: 0.3s;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+.submit-btn:hover, .remove-btn:hover {
+    background: #a1031f;
+}
+
+.chart-container {
+    width: 60%;
+    max-width: 600px;
+    min-width: 300px;
+    margin: auto;
+    margin-top: 30px;
+    background: white;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+/* Remove Button Section */
+.remove-section {
+    display: none;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin-top: 15px;
+}
+
+.remove-btn {
+    width: auto;
+    padding: 10px 15px;
+}
+
+.test-info {
+    font-size: 16px;
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.color-box {
+    width: 20px;
+    height: 20px;
+    display: inline-block;
+    border-radius: 5px;
+    border: 1px solid black;
+    margin-left: 10px;
+}
+
+.test-selector {
+    padding: 8px;
+    font-size: 16px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    margin-right: 10px;
+}
+
+/* Adaptive Design */
+@media (max-width: 768px) {
+    .container, .chart-container {
+        width: 90%;
+        padding: 20px;
+    }
+
+    .header {
+        font-size: 24px;
+        padding: 15px;
+    }
+
+    label {
+        font-size: 16px;
+    }
+
+    .submit-btn, .remove-btn {
+        font-size: 16px;
+        padding: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .header {
+        font-size: 20px;
+        padding: 12px;
+    }
+
+    .container, .chart-container {
+        width: 95%;
+        padding: 15px;
+    }
+
+    label {
+        font-size: 14px;
+    }
+
+    input {
+        font-size: 14px;
+        padding: 8px;
+    }
+
+    .submit-btn, .remove-btn {
+        font-size: 14px;
+        padding: 7px;
+    }
+}
+
+
+
+/* Footer Styles */
+.footer {
+    background: #d90429;
+    color: white;
+    text-align: center;
+    padding: 15px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    border-radius: 10px 10px 0 0;
+    margin-top: 30px;
+}
+
+.footer-license {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.footer-buttons {
+    display: flex;
+    gap: 15px;
+}
+
+.footer-btn {
+    background: white;
+    color: #d90429;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 10px 20px;
+    border: 2px solid #d90429;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.footer-btn:hover {
+    background: #a1031f;
+    color: white;
+    border-color: #a1031f;
+}
+
+/* Adaptive Footer */
+@media (max-width: 768px) {
+    .footer {
+        padding: 12px 15px;
+        font-size: 14px;
+    }
+
+    .footer-license {
+        font-size: 12px;
+    }
+
+    .footer-btn {
+        font-size: 14px;
+        padding: 8px 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .footer {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .footer-buttons {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .footer-btn {
+        width: 100%;
+        padding: 10px;
+    }
+}
