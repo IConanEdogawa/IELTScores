@@ -134,22 +134,22 @@
 
         <div class="input-group">
             <label>Reading:</label>
-            <input type="number" id="reading" min="0" max="9" step="0.5" placeholder="Enter Reading score">
+            <input type="number" id="reading" min="0" max="9" step="0.5" placeholder="Enter Reading score" oninput="validateInput(this)">
         </div>
 
         <div class="input-group">
             <label>Speaking:</label>
-            <input type="number" id="speaking" min="0" max="9" step="0.5" placeholder="Enter Speaking score">
+            <input type="number" id="speaking" min="0" max="9" step="0.5" placeholder="Enter Speaking score" oninput="validateInput(this)">
         </div>
 
         <div class="input-group">
             <label>Writing:</label>
-            <input type="number" id="writing" min="0" max="9" step="0.5" placeholder="Enter Writing score">
+            <input type="number" id="writing" min="0" max="9" step="0.5" placeholder="Enter Writing score" oninput="validateInput(this)">
         </div>
 
         <div class="input-group">
             <label>Listening:</label>
-            <input type="number" id="listening" min="0" max="9" step="0.5" placeholder="Enter Listening score">
+            <input type="number" id="listening" min="0" max="9" step="0.5" placeholder="Enter Listening score" oninput="validateInput(this)">
         </div>
 
         <button class="submit-btn" onclick="addTestData()">Submit</button>
@@ -198,6 +198,39 @@
                 }
             }
         });
+
+
+        function validateInput(input) {
+            let value = parseFloat(input.value);
+            
+            if (isNaN(value) || value < 0 || value > 9) {
+                input.value = ""; // Очищаем поле
+                showErrorMessage(input, "Score must be between 0 and 9");
+            } else {
+                hideErrorMessage(input);
+            }
+        }
+    
+        function showErrorMessage(input, message) {
+            let errorSpan = input.nextElementSibling;
+            if (!errorSpan || !errorSpan.classList.contains("error-message")) {
+                errorSpan = document.createElement("span");
+                errorSpan.classList.add("error-message");
+                errorSpan.style.color = "red";
+                errorSpan.style.fontSize = "14px";
+                errorSpan.style.display = "block";
+                errorSpan.style.marginTop = "5px";
+                input.parentNode.appendChild(errorSpan);
+            }
+            errorSpan.textContent = message;
+        }
+    
+        function hideErrorMessage(input) {
+            let errorSpan = input.nextElementSibling;
+            if (errorSpan && errorSpan.classList.contains("error-message")) {
+                errorSpan.remove();
+            }
+        }
 
         function addTestData() {
             let date = document.getElementById('testDate').value || `Test #${testData.length + 1}`;
