@@ -202,15 +202,15 @@
 
         function validateInput(input) {
             let value = parseFloat(input.value);
-            
-            if (isNaN(value) || value < 0 || value > 9) {
+        
+            if (isNaN(value) || value < 0 || value > 9 || value % 0.5 !== 0) {
                 input.value = ""; // Очищаем поле
-                showErrorMessage(input, "Score must be between 0 and 9");
+                showErrorMessage(input, "Score must be between 0 and 9 with a step of 0.5");
             } else {
                 hideErrorMessage(input);
             }
         }
-    
+        
         function showErrorMessage(input, message) {
             let errorSpan = input.nextElementSibling;
             if (!errorSpan || !errorSpan.classList.contains("error-message")) {
@@ -224,13 +224,22 @@
             }
             errorSpan.textContent = message;
         }
-    
+        
         function hideErrorMessage(input) {
             let errorSpan = input.nextElementSibling;
             if (errorSpan && errorSpan.classList.contains("error-message")) {
                 errorSpan.remove();
             }
         }
+        
+        // Добавляем обработчик потери фокуса
+        document.addEventListener("DOMContentLoaded", function () {
+            const input = document.getElementById("numberInput");
+            input.addEventListener("blur", function () {
+                validateInput(input);
+            });
+        });
+        
 
         function addTestData() {
             let date = document.getElementById('testDate').value || `Test #${testData.length + 1}`;
