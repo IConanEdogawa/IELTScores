@@ -261,3 +261,81 @@ input {
         padding: 10px;
     }
 }
+
+
+
+.instruction-container {
+    width: 40%; /* Такая же ширина, как у формы */
+    max-width: 500px;
+    min-width: 300px;
+    margin: auto;
+    background: rgba(217, 4, 41, 0.2); /* Полупрозрачный красный */
+    padding: 30px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    margin-top: 20px;
+    text-align: left;
+    position: relative;
+}
+
+/* .instruction-header {
+    font-size: 20px;
+    font-weight: bold;
+    background: white;
+    color: #d90429;
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 5px;
+    position: absolute;
+    margin: -20px;
+    /* top: 0px; */
+    /* left: 10px; */
+ */
+
+.instruction-container ul {
+    padding-left: 20px;
+}
+
+.instruction-container li {
+    margin: 10px 0;
+}
+
+.instruction-container p {
+    margin-top: 10px;
+    font-size: 16px;
+}
+
+/* --- АДАПТАЦИЯ ДЛЯ ПЛАНШЕТОВ И ТЕЛЕФОНОВ --- */
+@media (max-width: 768px) {
+    .instruction-container {
+        width: 80%; /* Увеличиваем ширину для удобства */
+        padding: 20px;
+    }
+
+    .instruction-header {
+        font-size: 18px;
+        padding: 5px 8px;
+    }
+
+    .instruction-container p,
+    .instruction-container li {
+        font-size: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .instruction-container {
+        width: 95%; /* Почти на весь экран для маленьких устройств */
+        padding: 15px;
+    }
+
+    .instruction-header {
+        font-size: 16px;
+        padding: 4px 7px;
+    }
+
+    .instruction-container p,
+    .instruction-container li {
+        font-size: 14px;
+    }
+}
