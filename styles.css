@@ -10,6 +10,9 @@ body {
 }
 
 .header {
+    width: 100%;
+    left: 0;
+    box-sizing: border-box;
     background: #d90429;
     color: white;
     font-size: 28px;
@@ -47,6 +50,7 @@ input {
     border: 1px solid #ccc;
     border-radius: 5px;
     font-size: 16px;
+    box-sizing: border-box;
 }
 
 .submit-btn, .remove-btn {
@@ -119,13 +123,16 @@ input {
 /* Adaptive Design */
 @media (max-width: 768px) {
     .container, .chart-container {
-        width: 90%;
+        width: 100%;
         padding: 20px;
     }
 
     .header {
-        font-size: 24px;
-        padding: 15px;
+        width: 100%;
+    }
+
+    .footer {
+        width: 100%;
     }
 
     label {
@@ -156,6 +163,7 @@ input {
     input {
         font-size: 14px;
         padding: 8px;
+        box-sizing: border-box;
     }
 
     .submit-btn, .remove-btn {
@@ -180,6 +188,9 @@ input {
     gap: 10px;
     border-radius: 10px 10px 0 0;
     margin-top: 30px;
+    width: 100%;
+    left: 0;
+    box-sizing: border-box;
 }
 
 .footer-license {
@@ -216,6 +227,9 @@ input {
     .footer {
         padding: 12px 15px;
         font-size: 14px;
+        width: 100%;
+        left: 0;
+        box-sizing: border-box;
     }
 
     .footer-license {
@@ -232,6 +246,9 @@ input {
     .footer {
         flex-direction: column;
         gap: 8px;
+        width: 100%;
+        left: 0;
+        box-sizing: border-box;
     }
 
     .footer-buttons {
