@@ -1,0 +1,937 @@
+﻿// в”Ђв”Ђ DATA в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+const SECTIONS = [
+  { key: 'listening',  label: 'Listening',  icon: '\u{1F3A7}', color: '#2DD4BF' },
+  { key: 'reading',    label: 'Reading',    icon: '\u{1F4D6}', color: '#60A5FA' },
+  { key: 'writing',    label: 'Writing',    icon: '\u270D', color: '#F5C842' },
+  { key: 'speaking',   label: 'Speaking',   icon: '\u{1F3A4}', color: '#FB7185' },
+];
+
+const TIPS = {
+  listening: [
+    "Practice with BBC podcasts - focus on following fast speech.",
+    "Do 1 IELTS listening mock daily. Review every wrong answer.",
+    "Listen to TED Talks and note key ideas without pausing.",
+  ],
+  reading: [
+    "Skim headings first, then scan for keywords in questions.",
+    "Practice True/False/Not Given - most students lose points here.",
+    "Time yourself: 20 min per passage max.",
+  ],
+  writing: [
+    "Task 2: spend 5 min planning before writing - structure wins.",
+    "Use a variety of sentence structures. Examiners notice repetition.",
+    "Practice paraphrasing the question in your introduction.",
+  ],
+  speaking: [
+    "Record yourself answering Part 2 topics - listen back critically.",
+    "Don't memorize answers - examiners can tell. Be natural.",
+    "Filler phrases like 'That's an interesting question' buy thinking time.",
+  ],
+};
+
+// History card gradient palette - two harmonious hues, teal to violet
+const CARD_COLORS = [
+  { bg: 'rgba(45,212,191,.07)',  border: 'rgba(45,212,191,.18)'  },  // teal
+  { bg: 'rgba(55,200,180,.07)',  border: 'rgba(55,200,180,.16)'  },
+  { bg: 'rgba(80,180,200,.07)',  border: 'rgba(80,180,200,.15)'  },
+  { bg: 'rgba(100,165,210,.07)', border: 'rgba(100,165,210,.15)' },
+  { bg: 'rgba(130,148,220,.07)', border: 'rgba(130,148,220,.15)' },
+  { bg: 'rgba(155,135,230,.07)', border: 'rgba(155,135,230,.15)' },
+  { bg: 'rgba(167,139,250,.07)', border: 'rgba(167,139,250,.18)' },  // violet
+];
+
+// в”Ђв”Ђ MOCK DATA (fallback if localStorage empty) в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+const MOCK_ENTRIES = [
+  { date: '2025-01-10', listening: 6.0, reading: 5.5, writing: 5.0, speaking: 5.5, overall: 5.5, manualOverall: false, mood: '' },
+  { date: '2025-01-25', listening: 6.5, reading: 6.0, writing: 5.5, speaking: 5.5, overall: 6.0, manualOverall: false, mood: 'Felt more prepared this time.' },
+  { date: '2025-02-08', listening: 7.0, reading: 6.0, writing: 5.5, speaking: 6.0, overall: 6.0, manualOverall: false, mood: '' },
+  { date: '2025-02-22', listening: 7.0, reading: 6.5, writing: 6.0, speaking: 6.0, overall: 6.5, manualOverall: true,  mood: 'Writing still feels weak.' },
+  { date: '2025-03-10', listening: 7.5, reading: 7.0, writing: 6.0, speaking: 6.5, overall: 7.0, manualOverall: false, mood: '' },
+  { date: '2025-03-28', listening: 7.5, reading: 7.0, writing: 6.5, speaking: 6.5, overall: 7.0, manualOverall: true,  mood: 'Best session yet, calm and focused.' },
+];
+
+function loadEntries() {
+  try {
+    const raw = localStorage.getItem('nylc_ielts_entries');
+    return raw ? JSON.parse(raw) : MOCK_ENTRIES;
+  } catch { return MOCK_ENTRIES; }
+}
+
+function saveEntries() {
+  try { localStorage.setItem('nylc_ielts_entries', JSON.stringify(entries)); } catch {}
+}
+
+let entries = loadEntries();
+
+const TARGETS_KEY = 'nylc_ielts_targets';
+let overallEnabled = false;
+let moodOpen = false;
+let currentPeriod = 'all';
+let historyFilter = 'all';
+let lineChart = null;
+let radarChart = null;
+let targets = loadTargets();
+
+// в”Ђв”Ђ INIT в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+document.getElementById('entryDate').value = new Date().toISOString().split('T')[0];
+buildSliders();
+renderTargets();
+renderHistory();
+renderCharts();
+renderTips();
+updateAiTipsVisibility();
+
+// в”Ђв”Ђ SLIDERS в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+function buildSliders() {
+  const wrap = document.getElementById('sliders');
+  wrap.innerHTML = SECTIONS.map(s => sliderHTML(s.key, s.label, s.icon, s.color, 6.0)).join('');
+
+  const owrap = document.getElementById('overallSliderWrap');
+  owrap.innerHTML = sliderHTML('overall', 'Overall', '\u2605', '#F5C842', 6.0);
+
+  document.querySelectorAll('.ielts-slider').forEach(el => {
+    updateSliderFill(el);
+    el.addEventListener('input', function() {
+      updateSliderFill(this);
+      const key = this.dataset.key;
+      const val = parseFloat(this.value);
+      document.getElementById('score-' + key).textContent = val.toFixed(1);
+      document.getElementById('score-' + key).style.color = scoreColor(val);
+    });
+  });
+}
+
+function sliderHTML(key, label, icon, color, def) {
+  return `
+  <div class="section-row">
+    <div class="section-head">
+      <div class="section-name">
+        <div class="section-icon" style="background:${color}18">${icon}</div>
+        ${label}
+      </div>
+      <div class="section-score" id="score-${key}" style="color:${scoreColor(def)}">${def.toFixed(1)}</div>
+    </div>
+    <div class="slider-wrap">
+      <input type="range" class="ielts-slider" id="slider-${key}" data-key="${key}"
+             min="0" max="9" step="0.5" value="${def}" style="--c:${color}"/>
+    </div>
+  </div>`;
+}
+
+function updateSliderFill(el) {
+  const pct = (el.value / 9) * 100;
+  const color = el.style.getPropertyValue('--c') || '#F5C842';
+  el.style.background = `linear-gradient(to right, ${color} ${pct}%, var(--surface2) ${pct}%)`;
+}
+
+function scoreColor(v) {
+  if (v >= 7.5) return '#4ADE80';
+  if (v >= 6.5) return '#2DD4BF';
+  if (v >= 5.5) return '#F5C842';
+  return '#FB7185';
+}
+
+// в”Ђв”Ђ OVERALL TOGGLE в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+function toggleOverall() {
+  overallEnabled = !overallEnabled;
+  const tog = document.getElementById('overallToggle');
+  tog.classList.toggle('on', overallEnabled);
+  document.getElementById('overallSliderWrap').style.display = overallEnabled ? 'block' : 'none';
+}
+
+// в”Ђв”Ђ MOOD TOGGLE в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+function toggleMood() {
+  moodOpen = !moodOpen;
+  document.getElementById('moodExpand').classList.toggle('open', moodOpen);
+  document.getElementById('moodArrow').textContent = moodOpen ? '\u2715' : '\u{1F4AC}';
+}
+
+// в”Ђв”Ђ ADD ENTRY в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+function addEntry() {
+  const date = document.getElementById('entryDate').value;
+  if (!date) { showToast('Pick a date first'); return; }
+
+  const mood = document.getElementById('moodNote').value.trim();
+  const entry = { date, manualOverall: overallEnabled, mood };
+  let sum = 0;
+  SECTIONS.forEach(s => {
+    const v = parseFloat(document.getElementById('slider-' + s.key).value);
+    entry[s.key] = v;
+    sum += v;
+  });
+
+  if (overallEnabled) {
+    entry.overall = parseFloat(document.getElementById('slider-overall').value);
+  } else {
+    const avg = sum / 4;
+    entry.overall = Math.round(avg * 2) / 2;
+  }
+
+  entries.unshift(entry);
+  entries.sort((a,b) => a.date.localeCompare(b.date));
+  saveEntries();
+
+  // reset mood
+  document.getElementById('moodNote').value = '';
+  if (moodOpen) toggleMood();
+
+  renderHistory();
+  renderCharts();
+  renderTips();
+  updateAiTipsVisibility();
+  showToast('Entry saved \u2713');
+  switchTab('history');
+}
+
+// в”Ђв”Ђ HISTORY в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+function renderHistory() {
+  const el = document.getElementById('historyList');
+  const filtered = getFilteredHistoryEntries();
+  if (!filtered.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">\u{1F4CB}</div><p>No entries yet for this filter.<br/>Try another filter or add a result.</p></div>`;
+    return;
+  }
+  const sorted = [...filtered].reverse();
+  const total = sorted.length;
+  // sorted is newest first, so "prev" = next in sorted array (older entry)
+  el.innerHTML = sorted.map((e, i) => entryWrapHTML(e, i, total, sorted[i+1])).join('');
+  initSwipes();
+}
+
+function cardColor(i, total) {
+  if (total <= 1) return CARD_COLORS[0];
+  const t = i / (total - 1);
+  const idx = Math.round(t * (CARD_COLORS.length - 1));
+  return CARD_COLORS[idx];
+}
+
+function entryWrapHTML(e, i, total, prev) {
+  const col = cardColor(i, total);
+  return `
+  <div class="entry-wrap" id="wrap-${e.date}">
+    <div class="entry-delete-bg">
+      <div class="entry-delete-btn">
+        <span class="del-icon">\u{1F5D1}</span>
+        <span>Delete</span>
+      </div>
+    </div>
+    ${entryCardHTML(e, col, prev)}
+  </div>`;
+}
+
+function entryCardHTML(e, col, prev) {
+  col = col || CARD_COLORS[0];
+  const d = new Date(e.date);
+  const dateStr = d.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+  const bars = SECTIONS.map(s => `
+    <div class="entry-bar-item">
+      <div class="entry-bar-label">${s.label}</div>
+      <div class="entry-bar-track">
+        <div class="entry-bar-fill" style="width:${(e[s.key]/9*100).toFixed(1)}%;background:${s.color}"></div>
+      </div>
+      <div class="entry-bar-val" style="color:${s.color}">${e[s.key].toFixed(1)}</div>
+    </div>`).join('');
+
+  const moodHTML = e.mood ? `<div class="entry-mood">${e.mood}</div>` : '';
+
+  let deltaHTML = '';
+  if (prev) {
+    const diff = e.overall - prev.overall;
+    const sign = diff > 0 ? '+' : '';
+    const col2 = diff > 0 ? 'var(--green)' : diff < 0 ? 'var(--rose)' : 'var(--muted2)';
+    const arrow = diff > 0 ? '\u2191' : diff < 0 ? '\u2193' : '\u2192';
+    deltaHTML = `<div style="font-size:11px;font-family:'DM Mono',monospace;color:${col2};margin-top:2px">${arrow} ${sign}${diff.toFixed(1)} overall</div>`;
+  }
+
+  return `
+  <div class="entry-card" data-date="${e.date}"
+       style="background:${col.bg};border-color:${col.border}">
+    <div class="entry-top">
+      <div>
+        <div class="entry-date">${dateStr}</div>
+        ${e.manualOverall ? '<div style="font-size:10px;color:var(--muted2);margin-top:2px;font-family:DM Mono,monospace">official</div>' : ''}
+        ${deltaHTML}
+      </div>
+      <div class="entry-overall">${e.overall.toFixed(1)}<span>overall</span></div>
+    </div>
+    <div class="entry-bars">${bars}</div>
+    ${moodHTML}
+  </div>`;
+}
+
+// в”Ђв”Ђ SWIPE TO DELETE в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+function initSwipes() {
+  document.querySelectorAll('.entry-card').forEach(card => {
+    let startX = 0, currentX = 0, dragging = false;
+    const THRESHOLD = 80;
+
+    card.addEventListener('touchstart', e => {
+      startX = e.touches[0].clientX;
+      dragging = true;
+    }, { passive: true });
+
+    card.addEventListener('touchmove', e => {
+      if (!dragging) return;
+      currentX = e.touches[0].clientX - startX;
+      if (currentX > 0) { currentX = 0; return; }
+      const clamp = Math.max(currentX, -160);
+      card.style.transform = `translateX(${clamp}px)`;
+      const wrap = card.closest('.entry-wrap');
+      if (Math.abs(clamp) > 40) wrap.classList.add('swiped');
+      else wrap.classList.remove('swiped');
+    }, { passive: true });
+
+    card.addEventListener('touchend', () => {
+      dragging = false;
+      const wrap = card.closest('.entry-wrap');
+      if (Math.abs(currentX) >= THRESHOLD) {
+        card.style.transform = `translateX(-160px)`;
+        wrap.classList.add('swiped');
+        wrap.querySelector('.entry-delete-bg').addEventListener('click', () => {
+          deleteEntry(card.dataset.date);
+        }, { once: true });
+      } else {
+        card.style.transform = `translateX(0)`;
+        wrap.classList.remove('swiped');
+      }
+      currentX = 0;
+    });
+  });
+}
+
+function deleteEntry(date) {
+  const wrap = document.getElementById('wrap-' + date);
+  const card = wrap.querySelector('.entry-card');
+  card.classList.add('deleting');
+  setTimeout(() => {
+    entries = entries.filter(e => e.date !== date);
+    saveEntries();
+    renderHistory();
+    renderCharts();
+    renderTips();
+    updateAiTipsVisibility();
+    showToast('Entry deleted');
+  }, 300);
+}
+
+// в”Ђв”Ђ CHARTS в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+function filteredEntries() {
+  if (currentPeriod === 'all') return entries;
+  const now = new Date();
+  const days = currentPeriod === 'month' ? 30 : 7;
+  const cutoff = new Date(now - days * 86400000).toISOString().split('T')[0];
+  return entries.filter(e => e.date >= cutoff);
+}
+
+function renderCharts() {
+  renderLineChart();
+  renderRadarChart();
+  renderInsights();
+}
+
+let modalChart = null;
+let modalPeriod = 'all';
+
+function openChartModal() {
+  document.getElementById('chartModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  renderModalChart();
+}
+
+function closeChartModal() {
+  document.getElementById('chartModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function setModalPeriod(p, btn) {
+  modalPeriod = p;
+  document.querySelectorAll('.chart-modal-period .period-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderModalChart();
+}
+
+function filteredModalEntries() {
+  if (modalPeriod === 'all') return entries;
+  const now = new Date();
+  const days = modalPeriod === 'month' ? 30 : 7;
+  const cutoff = new Date(now - days * 86400000).toISOString().split('T')[0];
+  return entries.filter(e => e.date >= cutoff);
+}
+
+function renderModalChart() {
+  const data = filteredModalEntries();
+  const labels = data.map(e => {
+    const d = new Date(e.date);
+    return d.toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+  });
+  const datasets = [
+    ...SECTIONS.map(s => ({
+      label: s.label,
+      data: data.map(e => e[s.key]),
+      borderColor: s.color,
+      backgroundColor: s.color + '15',
+      borderWidth: 2.5,
+      pointRadius: 5,
+      pointBackgroundColor: s.color,
+      tension: 0.4,
+      fill: false,
+    })),
+    {
+      label: 'Overall',
+      data: data.map(e => e.overall),
+      borderColor: '#fff',
+      backgroundColor: 'rgba(255,255,255,.05)',
+      borderWidth: 3,
+      borderDash: [6,3],
+      pointRadius: 6,
+      pointBackgroundColor: '#fff',
+      tension: 0.4,
+      fill: false,
+    }
+  ];
+
+  if (modalChart) modalChart.destroy();
+  const ctx = document.getElementById('lineChartModal').getContext('2d');
+  modalChart = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: false,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          labels: {
+            color: 'rgba(240,244,255,.65)',
+            font: { family: 'DM Mono', size: 11 },
+            boxWidth: 14, padding: 16,
+          }
+        },
+        tooltip: {
+          backgroundColor: '#1a2235',
+          borderColor: 'rgba(255,255,255,.12)',
+          borderWidth: 1,
+          titleColor: '#F0F4FF',
+          bodyColor: 'rgba(240,244,255,.75)',
+          titleFont: { family: 'DM Mono', size: 12 },
+          bodyFont: { family: 'DM Mono', size: 12 },
+          padding: 14,
+        }
+      },
+      scales: {
+        y: {
+          min: 0, max: 9,
+          ticks: { stepSize: 1.5, color: 'rgba(240,244,255,.4)', font: { family: 'DM Mono', size: 11 } },
+          grid: { color: 'rgba(255,255,255,.06)' },
+          border: { display: false },
+        },
+        x: {
+          ticks: { color: 'rgba(240,244,255,.4)', font: { family: 'DM Mono', size: 11 }, maxRotation: 0 },
+          grid: { display: false },
+          border: { display: false },
+        }
+      }
+    }
+  });
+}
+
+function renderLineChart() {
+  const data = filteredEntries();
+  const labels = data.map(e => {
+    const d = new Date(e.date);
+    return d.toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+  });
+
+  const datasets = [
+    ...SECTIONS.map(s => ({
+      label: s.label,
+      data: data.map(e => e[s.key]),
+      borderColor: s.color,
+      backgroundColor: s.color + '15',
+      borderWidth: 2,
+      pointRadius: 4,
+      pointBackgroundColor: s.color,
+      tension: 0.4,
+      fill: false,
+    })),
+    {
+      label: 'Overall',
+      data: data.map(e => e.overall),
+      borderColor: '#fff',
+      backgroundColor: 'rgba(255,255,255,.05)',
+      borderWidth: 2.5,
+      borderDash: [5,3],
+      pointRadius: 5,
+      pointBackgroundColor: '#fff',
+      tension: 0.4,
+      fill: false,
+    }
+  ];
+
+  if (lineChart) lineChart.destroy();
+  const canvas = document.getElementById('lineChart');
+  const ctx = canvas.getContext('2d');
+  lineChart = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          labels: {
+            color: 'rgba(240,244,255,.55)',
+            font: { family: 'DM Mono', size: 10 },
+            boxWidth: 12,
+            padding: 12,
+          }
+        },
+        tooltip: {
+          backgroundColor: '#1a2235',
+          borderColor: 'rgba(255,255,255,.1)',
+          borderWidth: 1,
+          titleColor: '#F0F4FF',
+          bodyColor: 'rgba(240,244,255,.7)',
+          titleFont: { family: 'DM Mono', size: 11 },
+          bodyFont: { family: 'DM Mono', size: 11 },
+          padding: 12,
+        }
+      },
+      scales: {
+        y: {
+          min: 0, max: 9,
+          ticks: {
+            stepSize: 1.5,
+            color: 'rgba(240,244,255,.35)',
+            font: { family: 'DM Mono', size: 10 },
+          },
+          grid: { color: 'rgba(255,255,255,.05)' },
+          border: { display: false },
+        },
+        x: {
+          ticks: {
+            color: 'rgba(240,244,255,.35)',
+            font: { family: 'DM Mono', size: 10 },
+            maxRotation: 0,
+          },
+          grid: { display: false },
+          border: { display: false },
+        }
+      }
+    }
+  });
+}
+
+function renderRadarChart() {
+  const avgs = {};
+  SECTIONS.forEach(s => {
+    avgs[s.key] = entries.length ? entries.reduce((a,e) => a + e[s.key], 0) / entries.length : 0;
+  });
+  avgs.overall = entries.length ? entries.reduce((a,e) => a + e.overall, 0) / entries.length : 0;
+
+  const labels = [...SECTIONS.map(s => s.label), 'Overall'];
+  const dataVals = [...SECTIONS.map(s => avgs[s.key]), avgs.overall];
+  const colors = [...SECTIONS.map(s => s.color), '#ffffff'];
+
+  if (radarChart) radarChart.destroy();
+  const ctx = document.getElementById('radarChart').getContext('2d');
+  radarChart = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Average Band',
+        data: dataVals,
+        backgroundColor: 'rgba(245,200,66,.1)',
+        borderColor: 'rgba(245,200,66,.7)',
+        borderWidth: 2,
+        pointBackgroundColor: colors,
+        pointBorderColor: 'transparent',
+        pointRadius: 6,
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      aspectRatio: 1.05,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1a2235',
+          titleColor: '#F0F4FF',
+          bodyColor: 'rgba(240,244,255,.7)',
+          titleFont: { family: 'DM Mono', size: 11 },
+          bodyFont: { family: 'DM Mono', size: 12 },
+          padding: 12,
+          borderColor: 'rgba(255,255,255,.1)',
+          borderWidth: 1,
+          callbacks: { label: ctx => ` ${ctx.raw.toFixed(1)}` }
+        }
+      },
+      scales: {
+        r: {
+          min: 0, max: 9,
+          ticks: {
+            stepSize: 3,
+            color: 'rgba(240,244,255,.3)',
+            font: { family: 'DM Mono', size: 9 },
+            backdropColor: 'transparent',
+          },
+          grid: { color: 'rgba(255,255,255,.08)' },
+          angleLines: { color: 'rgba(255,255,255,.08)' },
+          pointLabels: {
+            color: colors,
+            font: { family: 'Outfit', size: 12, weight: '500' },
+          }
+        }
+      }
+    }
+  });
+}
+
+// в”Ђв”Ђ TIPS в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+function renderTips() {
+  if (!entries.length) {
+    document.getElementById('tipsSection').innerHTML = '';
+    return;
+  }
+
+  const last = entries[entries.length - 1];
+  const scored = SECTIONS.map(s => ({ ...s, score: last[s.key] }))
+    .sort((a,b) => a.score - b.score)
+    .slice(0, 2);
+
+  const html = `
+    <div class="chart-label" style="margin-bottom:12px;font-size:11px;font-family:'DM Mono',monospace;letter-spacing:.8px;text-transform:uppercase;color:var(--muted)">Tips for you</div>
+    ${scored.map(s => {
+      const tip = TIPS[s.key][Math.floor(Math.random() * TIPS[s.key].length)];
+      return `
+      <div class="tip-card">
+        <div class="tip-section">${s.icon} ${s.label} &middot; ${s.score.toFixed(1)}</div>
+        <div class="tip-text">${tip}</div>
+      </div>`;
+    }).join('')}`;
+
+  document.getElementById('tipsSection').innerHTML = html;
+}
+
+// в”Ђв”Ђ AI TIPS в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+function updateAiTipsVisibility() {
+  document.getElementById('aiTipsCard').style.display = entries.length >= 2 ? 'block' : 'none';
+}
+
+function pickRepresentativeEntries() {
+  if (!entries.length) return [];
+  const sorted = [...entries].sort((a,b) => a.overall - b.overall);
+  const worst = sorted[0];
+  const best = sorted[sorted.length - 1];
+  const midIdx = Math.floor(sorted.length / 2);
+  const mid = sorted[midIdx];
+  // deduplicate
+  const seen = new Set();
+  return [worst, mid, best].filter(e => {
+    if (seen.has(e.date)) return false;
+    seen.add(e.date);
+    return true;
+  });
+}
+
+async function fetchAiTips() {
+  const btn = document.getElementById('btnAiTips');
+  const result = document.getElementById('aiTipsResult');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="ai-typing"> Analysing</span>';
+  result.style.display = 'block';
+  result.textContent = '';
+  result.classList.add('ai-typing');
+
+  const rep = pickRepresentativeEntries();
+
+  // Build a clean summary for the prompt
+  const summary = rep.map(e => {
+    const d = new Date(e.date).toLocaleDateString('en-GB', { month:'short', year:'numeric' });
+    const parts = SECTIONS.map(s => `${s.label}: ${e[s.key]}`).join(', ');
+    return `${d} - ${parts}, Overall: ${e.overall}${e.mood ? ` (note: "${e.mood}")` : ''}`;
+  }).join('\n');
+
+  const allOveralls = entries.map(e => e.overall);
+  const trend = allOveralls.length >= 2
+    ? (allOveralls[allOveralls.length-1] - allOveralls[0]).toFixed(1)
+    : '0';
+
+  const prompt = `You are an expert IELTS coach. Analyse this student's results and give a short, direct, personalised coaching response (3-5 sentences max). Focus on their weakest sections, notable trends, and one concrete action they can take. Be specific and motivating, not generic.
+
+Student's representative results (worst, middle, best):
+${summary}
+
+Overall trend: ${trend > 0 ? '+' : ''}${trend} bands since first test.
+Total tests logged: ${entries.length}.
+
+Give your analysis in plain text, no markdown, no bullet points.`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await response.json();
+    const text = data.content?.find(b => b.type === 'text')?.text || 'Could not generate analysis.';
+
+    result.classList.remove('ai-typing');
+    result.textContent = text;
+    btn.innerHTML = '<span>\u2726</span> Refresh analysis';
+    btn.disabled = false;
+  } catch (err) {
+    result.classList.remove('ai-typing');
+    result.textContent = 'Something went wrong. Try again.';
+    btn.innerHTML = '<span>\u2726</span> Try again';
+    btn.disabled = false;
+  }
+}
+
+// в”Ђв”Ђ PERIOD в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+function setPeriod(p, btn) {
+  currentPeriod = p;
+  document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderLineChart();
+}
+
+// в”Ђв”Ђ TABS в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    const names = ['add','history','charts'];
+    const isActive = names[i] === name;
+    t.classList.toggle('active', isActive);
+    t.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    t.setAttribute('tabindex', isActive ? '0' : '-1');
+  });
+  document.querySelectorAll('.page').forEach(p => {
+    p.classList.toggle('active', p.id === 'page-' + name);
+  });
+  if (name === 'charts') { renderCharts(); renderTips(); }
+  if (name === 'history') renderHistory();
+}
+
+function loadTargets() {
+  const fallback = Object.fromEntries(SECTIONS.map(s => [s.key, 7.0]));
+  try {
+    const raw = localStorage.getItem(TARGETS_KEY);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw);
+    SECTIONS.forEach(s => {
+      const v = Number(parsed?.[s.key]);
+      parsed[s.key] = Number.isFinite(v) ? Math.min(9, Math.max(0, v)) : fallback[s.key];
+    });
+    return parsed;
+  } catch {
+    return fallback;
+  }
+}
+
+function saveTargets() {
+  try { localStorage.setItem(TARGETS_KEY, JSON.stringify(targets)); } catch {}
+}
+
+function renderTargets() {
+  const wrap = document.getElementById('targets');
+  if (!wrap) return;
+
+  wrap.innerHTML = SECTIONS.map(s => `
+    <div class="section-row">
+      <div class="section-head">
+        <div class="section-name">
+          <div class="section-icon" style="background:${s.color}18">${s.icon}</div>
+          ${s.label} target
+        </div>
+        <div class="section-score" id="target-score-${s.key}" style="color:${scoreColor(targets[s.key])}">${targets[s.key].toFixed(1)}</div>
+      </div>
+      <div class="slider-wrap">
+        <input type="range" class="target-slider" data-key="${s.key}"
+               min="0" max="9" step="0.5" value="${targets[s.key]}" style="--c:${s.color}"/>
+      </div>
+    </div>
+  `).join('');
+
+  document.querySelectorAll('.target-slider').forEach(el => {
+    updateSliderFill(el);
+    el.addEventListener('input', function() {
+      updateSliderFill(this);
+      const key = this.dataset.key;
+      const val = parseFloat(this.value);
+      targets[key] = val;
+      const score = document.getElementById('target-score-' + key);
+      score.textContent = val.toFixed(1);
+      score.style.color = scoreColor(val);
+      saveTargets();
+    });
+  });
+}
+
+function resetTargets() {
+  targets = Object.fromEntries(SECTIONS.map(s => [s.key, 7.0]));
+  saveTargets();
+  renderTargets();
+  showToast('Targets reset');
+}
+
+function getFilteredHistoryEntries() {
+  if (historyFilter === 'official') return entries.filter(e => e.manualOverall);
+  if (historyFilter === 'notes') return entries.filter(e => (e.mood || '').trim().length > 0);
+  return entries;
+}
+
+function setHistoryFilter(mode, btn) {
+  historyFilter = mode;
+  document.querySelectorAll('.history-filter').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderHistory();
+}
+
+function exportEntries(format) {
+  if (!entries.length) { showToast('No entries to export'); return; }
+
+  let content = '';
+  let filename = '';
+  let mime = '';
+
+  if (format === 'csv') {
+    const headers = ['date', ...SECTIONS.map(s => s.key), 'overall', 'manualOverall', 'mood'];
+    const lines = [headers.join(',')];
+    [...entries].sort((a, b) => a.date.localeCompare(b.date)).forEach(e => {
+      const row = [
+        e.date,
+        ...SECTIONS.map(s => e[s.key]),
+        e.overall,
+        e.manualOverall ? 'true' : 'false',
+        `"${String(e.mood || '').replace(/"/g, '""')}"`
+      ];
+      lines.push(row.join(','));
+    });
+    content = lines.join('\n');
+    filename = 'ielts-tracker-export.csv';
+    mime = 'text/csv;charset=utf-8';
+  } else {
+    content = JSON.stringify([...entries].sort((a, b) => a.date.localeCompare(b.date)), null, 2);
+    filename = 'ielts-tracker-export.json';
+    mime = 'application/json;charset=utf-8';
+  }
+
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  showToast('Export complete');
+}
+
+async function importEntries(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if (!Array.isArray(data)) throw new Error('Invalid JSON structure');
+
+    const normalized = data
+      .filter(e => e && typeof e.date === 'string')
+      .map(e => {
+        const item = {
+          date: e.date,
+          manualOverall: !!e.manualOverall,
+          mood: String(e.mood || '').trim(),
+        };
+        let sum = 0;
+        SECTIONS.forEach(s => {
+          const v = Number(e[s.key]);
+          const safe = Number.isFinite(v) ? Math.min(9, Math.max(0, v)) : 0;
+          item[s.key] = safe;
+          sum += safe;
+        });
+        const o = Number(e.overall);
+        item.overall = Number.isFinite(o) ? Math.min(9, Math.max(0, o)) : Math.round((sum / 4) * 2) / 2;
+        return item;
+      });
+
+    if (!normalized.length) throw new Error('No valid entries found');
+
+    entries = normalized.sort((a, b) => a.date.localeCompare(b.date));
+    saveEntries();
+    renderHistory();
+    renderCharts();
+    renderTips();
+    updateAiTipsVisibility();
+    showToast('Import complete');
+  } catch {
+    showToast('Import failed');
+  } finally {
+    event.target.value = '';
+  }
+}
+
+function cancelEdit() {
+  const btn = document.getElementById('cancelEditBtn');
+  if (btn) btn.style.display = 'none';
+  const title = document.getElementById('entryFormTitle');
+  if (title) title.textContent = 'New Test Result';
+  const saveBtn = document.getElementById('saveEntryBtn');
+  if (saveBtn) saveBtn.textContent = 'Save Result';
+  showToast('Edit mode cancelled');
+}
+
+function renderInsights() {
+  const kpiGrid = document.getElementById('kpiGrid');
+  const cmp = document.getElementById('comparisonSummary');
+  if (!kpiGrid || !cmp) return;
+
+  if (!entries.length) {
+    kpiGrid.innerHTML = '';
+    cmp.innerHTML = `<div class="empty"><p>Add entries to see insights.</p></div>`;
+    return;
+  }
+
+  const latest = entries[entries.length - 1];
+  const first = entries[0];
+  const avgOverall = entries.reduce((acc, e) => acc + e.overall, 0) / entries.length;
+  const delta = latest.overall - first.overall;
+  const deltaSign = delta > 0 ? '+' : '';
+
+  kpiGrid.innerHTML = `
+    <div class="kpi-card"><div class="kpi-label">Latest Overall</div><div class="kpi-value">${latest.overall.toFixed(1)}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Average Overall</div><div class="kpi-value">${avgOverall.toFixed(1)}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Trend</div><div class="kpi-value">${deltaSign}${delta.toFixed(1)}</div></div>
+  `;
+
+  const weakest = SECTIONS
+    .map(s => ({ ...s, score: latest[s.key], gap: targets[s.key] - latest[s.key] }))
+    .sort((a, b) => a.score - b.score)[0];
+
+  cmp.innerHTML = `
+    <div class="tip-text">
+      Latest test is <strong>${latest.overall.toFixed(1)}</strong>.
+      Weakest area now: <strong style="color:${weakest.color}">${weakest.label} (${weakest.score.toFixed(1)})</strong>.
+      Gap to target: <strong>${weakest.gap.toFixed(1)}</strong>.
+    </div>
+  `;
+}
+
+// в”Ђв”Ђ TOAST в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
