@@ -24,6 +24,7 @@ const INSIGHT_OPTIONS = [
 
 const SUPPORT_HANDLE = '@Bro_Zuck';
 const SUPPORT_URL = 'https://t.me/Bro_Zuck';
+let deferredInstallPrompt = null;
 
 let settings = loadSettings();
 
@@ -32,6 +33,19 @@ bindThemeSelect();
 initThemeBrowserHint();
 initSupportHint();
 initUpdateStatus();
+initInstallStatus();
+
+window.addEventListener('beforeinstallprompt', event => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  initInstallStatus();
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  initInstallStatus();
+  showToast('App installed');
+});
 
 function goBack() {
   if (window.history.length > 1) {
@@ -205,6 +219,64 @@ function initUpdateStatus() {
   }
 
   setUpdateStatus('Ready to check for updates.');
+}
+
+function isIosLike() {
+  const ua = navigator.userAgent.toLowerCase();
+  return /iphone|ipad|ipod/.test(ua);
+}
+
+function initInstallStatus() {
+  const btn = document.getElementById('installAppBtn');
+  const status = document.getElementById('installStatus');
+  if (!btn || !status) return;
+
+  if (isStandalonePwa()) {
+    btn.disabled = true;
+    status.textContent = 'App is already installed on this device.';
+    return;
+  }
+
+  btn.disabled = false;
+
+  if (deferredInstallPrompt) {
+    status.textContent = 'Install is available. Tap the button to continue.';
+    return;
+  }
+
+  if (isIosLike()) {
+    status.textContent = 'On iPhone/iPad: Share -> Add to Home Screen.';
+    return;
+  }
+
+  status.textContent = 'If install is not shown, open browser menu and choose Install app.';
+}
+
+async function installApp() {
+  if (isStandalonePwa()) {
+    showToast('Already installed');
+    initInstallStatus();
+    return;
+  }
+
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    const choice = await deferredInstallPrompt.userChoice;
+    if (choice?.outcome === 'accepted') {
+      showToast('Install started');
+    } else {
+      showToast('Install cancelled');
+    }
+    deferredInstallPrompt = null;
+    initInstallStatus();
+    return;
+  }
+
+  if (isIosLike()) {
+    showToast('Use Share -> Add to Home Screen');
+  } else {
+    showToast('Use browser menu -> Install app');
+  }
 }
 
 function setUpdateStatus(message) {
