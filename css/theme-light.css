@@ -1,0 +1,132 @@
+html[data-theme='light'] {
+  color-scheme: light;
+}
+
+html[data-theme='light'] body {
+  background: #f6f8fc;
+  color: #1f2937;
+}
+
+html[data-theme='light'] :root,
+html[data-theme='light'] {
+  --bg: #f2f5fa;
+  --surface: #f8fbff;
+  --surface2: #e9eff7;
+  --border: rgba(15, 23, 42, .11);
+  --text: #1f2937;
+  --muted: rgba(31, 41, 55, .68);
+  --muted2: rgba(31, 41, 55, .45);
+  --gold: #d7a93f;
+  --teal: #1b9d8e;
+  --rose: #d45b72;
+  --blue: #4f86d9;
+  --violet: #7e76d7;
+  --green: #2f9b5e;
+  --nylc: #a43847;
+  --nylc-light: #be5361;
+}
+
+html[data-theme='light'] .header::before {
+  background: radial-gradient(circle, rgba(215, 169, 63, .18), transparent 65%);
+}
+
+html[data-theme='light'] .header::after {
+  background: radial-gradient(circle, rgba(27, 157, 142, .14), transparent 65%);
+}
+
+html[data-theme='light'] .nylc-brand {
+  background: rgba(164, 56, 71, .09);
+  border-color: rgba(164, 56, 71, .22);
+}
+
+html[data-theme='light'] .nylc-name,
+html[data-theme='light'] .header h1,
+html[data-theme='light'] .hero-card h1 {
+  color: #172033;
+}
+
+html[data-theme='light'] .nylc-name span {
+  color: rgba(23, 32, 51, .58);
+}
+
+html[data-theme='light'] .header-link,
+html[data-theme='light'] .btn-pill {
+  background: rgba(255, 255, 255, .9);
+  border-color: rgba(15, 23, 42, .14);
+  color: #2b3446;
+}
+
+html[data-theme='light'] .header-link:hover {
+  background: rgba(215, 169, 63, .12);
+}
+
+html[data-theme='light'] .tab.active,
+html[data-theme='light'] .history-filter.active {
+  color: #1e2535;
+}
+
+html[data-theme='light'] .btn-add {
+  background: linear-gradient(135deg, #e7c473, #ddb35b);
+  color: #222b3d;
+}
+
+html[data-theme='light'] .toast {
+  color: #12343c;
+}
+
+html[data-theme='light'] .glow-left {
+  background: rgba(126, 118, 215, .16);
+}
+
+html[data-theme='light'] .glow-right {
+  background: rgba(215, 169, 63, .2);
+}
+
+html[data-theme='light'] .hero-card,
+html[data-theme='light'] .info-card,
+html[data-theme='light'] .stats-row,
+html[data-theme='light'] .card {
+  background: linear-gradient(145deg, rgba(248, 251, 255, .98), rgba(239, 245, 253, .96));
+  border-color: rgba(15, 23, 42, .1);
+}
+
+html[data-theme='light'] .lead,
+html[data-theme='light'] .info-card p,
+html[data-theme='light'] .card-sub,
+html[data-theme='light'] .hint,
+html[data-theme='light'] .stat-label {
+  color: rgba(31, 41, 55, .7);
+}
+
+html[data-theme='light'] .badge,
+html[data-theme='light'] .tip-section {
+  background: rgba(215, 169, 63, .12);
+  color: #7d6124;
+  border-color: rgba(215, 169, 63, .32);
+}
+
+html[data-theme='light'] .card-kicker {
+  color: #6f7ca4;
+}
+
+html[data-theme='light'] .info-card h2,
+html[data-theme='light'] .toggle-title,
+html[data-theme='light'] .stat-value {
+  color: #1f2a42;
+}
+
+html[data-theme='light'] .stat-item {
+  background: rgba(241, 246, 254, .9);
+  border-color: rgba(15, 23, 42, .08);
+}
+
+html[data-theme='light'] .btn-primary {
+  background: linear-gradient(135deg, #d8b164, #d2a44f);
+  color: #1c2434;
+}
+
+html[data-theme='light'] .btn-ghost {
+  background: #eef4fc;
+  color: #273247;
+  border-color: rgba(15, 23, 42, .12);
+}

@@ -1,13 +1,18 @@
-﻿const CACHE_NAME = 'ielts-tracker-v1';
+﻿const CACHE_NAME = 'ielts-tracker-v4';
 const APP_SHELL = [
   '/',
   '/main.html',
   '/about.html',
+  '/settings.html',
   '/manifest.json',
   '/css/styles.css',
   '/css/about.css',
+  '/css/settings.css',
+  '/css/theme-light.css',
   '/js/scripts.js',
   '/js/about.js',
+  '/js/settings.js',
+  '/js/theme.js',
   '/icons/icon-192.png',
   '/icons/icon-512.png'
 ];
@@ -44,3 +49,6 @@ self.addEventListener('fetch', event => {
     })
   );
 });
+
+
+

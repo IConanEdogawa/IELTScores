@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>Settings | IELTS Tracker</title>
+  <script src="js/theme.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/settings.css"/>
+  <link rel="stylesheet" href="css/theme-light.css"/>
+</head>
+<body>
+  <main class="settings-page">
+    <div class="header-row">
+      <button class="btn-pill" type="button" onclick="goBack()">Back</button>
+      <a class="btn-pill btn-link" href="main.html">Tracker</a>
+    </div>
+
+    <section class="hero-card">
+      <div class="badge">Settings</div>
+      <h1>Control your <em>experience.</em></h1>
+      <p>Choose what appears in Insights, prepare for themes, and manage support and app updates.</p>
+    </section>
+
+    <section class="card">
+      <div class="card-title">Insights Visibility</div>
+      <div class="card-sub">Hide cards you do not need on the Insights tab.</div>
+      <div id="insightsToggles"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-title">Theme</div>
+      <div class="card-sub">Pick the look that feels best for your study sessions.</div>
+      <label class="field-label" for="themeSelect">Preferred theme</label>
+      <select id="themeSelect" class="field-input">
+        <option value="system">System</option>
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+      </select>
+      <div class="hint">Changes apply immediately.</div>
+    </section>
+
+    <section class="card">
+      <div class="card-title">Support</div>
+      <div class="card-sub">Get help faster with pre-filled app diagnostics.</div>
+      <div class="row-actions">
+        <button class="btn-inline" type="button" onclick="contactSupport()">Contact Support</button>
+        <button class="btn-inline" type="button" onclick="copyDiagnostics()">Copy Diagnostics</button>
+      </div>
+      <div class="hint" id="supportHint"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-title">Updates</div>
+      <div class="card-sub">Checks for updates only when running as the installed app.</div>
+      <div class="row-actions">
+        <button class="btn-inline" id="checkUpdatesBtn" type="button" onclick="checkForUpdates()">Check for updates</button>
+      </div>
+      <div class="hint" id="updateStatus"></div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="js/settings.js"></script>
+  <script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+  }
+  </script>
+</body>
+</html>

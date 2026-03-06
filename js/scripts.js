@@ -40,18 +40,21 @@ const CARD_COLORS = [
   { bg: 'rgba(167,139,250,.07)', border: 'rgba(167,139,250,.18)' },  // violet
 ];
 
-// в”Ђв”Ђ MOCK DATA (fallback if localStorage empty) в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
-const MOCK_ENTRIES = [
-  { date: '2025-01-10', listening: 6.0, reading: 5.5, writing: 5.0, speaking: 5.5, overall: 5.5, manualOverall: false, mood: '' },
-  { date: '2025-01-25', listening: 6.5, reading: 6.0, writing: 5.5, speaking: 5.5, overall: 6.0, manualOverall: false, mood: 'Felt more prepared this time.' },
-  { date: '2025-02-08', listening: 7.0, reading: 6.0, writing: 5.5, speaking: 6.0, overall: 6.0, manualOverall: false, mood: '' },
-  { date: '2025-02-22', listening: 7.0, reading: 6.5, writing: 6.0, speaking: 6.0, overall: 6.5, manualOverall: true,  mood: 'Writing still feels weak.' },
-  { date: '2025-03-10', listening: 7.5, reading: 7.0, writing: 6.0, speaking: 6.5, overall: 7.0, manualOverall: false, mood: '' },
-  { date: '2025-03-28', listening: 7.5, reading: 7.0, writing: 6.5, speaking: 6.5, overall: 7.0, manualOverall: true,  mood: 'Best session yet, calm and focused.' },
-];
-
 const ENTRIES_KEY = 'nylc_ielts_entries';
 const ENTRIES_VERSION = 1;
+const SETTINGS_KEY = 'nylc_ielts_settings';
+const DEFAULT_SETTINGS = {
+  theme: 'system',
+  insights: {
+    showKpis: true,
+    showComparison: true,
+    showTargets: true,
+    showProgress: true,
+    showRadar: true,
+    showTips: true,
+    showAiCoach: false,
+  }
+};
 
 function isValidDateString(value) {
   return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
@@ -88,11 +91,11 @@ function normalizeEntry(raw) {
 function loadEntries() {
   try {
     const raw = localStorage.getItem(ENTRIES_KEY);
-    if (!raw) return MOCK_ENTRIES;
+    if (!raw) return [];
 
     const parsed = JSON.parse(raw);
     const list = Array.isArray(parsed) ? parsed : parsed?.entries;
-    if (!Array.isArray(list)) return MOCK_ENTRIES;
+    if (!Array.isArray(list)) return [];
 
     const dedup = new Map();
     for (const item of list) {
@@ -102,9 +105,9 @@ function loadEntries() {
     }
 
     const result = Array.from(dedup.values()).sort((a, b) => a.date.localeCompare(b.date));
-    return result.length ? result : MOCK_ENTRIES;
+    return result;
   } catch {
-    return MOCK_ENTRIES;
+    return [];
   }
 }
 
@@ -120,6 +123,7 @@ function saveEntries() {
 }
 
 let entries = loadEntries();
+let settings = loadSettings();
 
 const TARGETS_KEY = 'nylc_ielts_targets';
 let overallEnabled = false;
@@ -139,6 +143,11 @@ renderHistory();
 renderCharts();
 renderTips();
 updateAiTipsVisibility();
+window.addEventListener('themechange', () => {
+  renderCharts();
+  renderTips();
+  updateAiTipsVisibility();
+});
 
 // в”Ђв”Ђ SLIDERS в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 function buildSliders() {
@@ -188,6 +197,50 @@ function scoreColor(v) {
   if (v >= 6.5) return '#2DD4BF';
   if (v >= 5.5) return '#F5C842';
   return '#FB7185';
+}
+
+function isLightTheme() {
+  return document.documentElement.getAttribute('data-theme') === 'light';
+}
+
+function getChartTheme() {
+  if (isLightTheme()) {
+    return {
+      overallLine: '#2f3b52',
+      overallBg: 'rgba(47,59,82,.08)',
+      legend: 'rgba(47,59,82,.74)',
+      tick: 'rgba(47,59,82,.68)',
+      tickSoft: 'rgba(47,59,82,.58)',
+      tickSofter: 'rgba(47,59,82,.5)',
+      grid: 'rgba(47,59,82,.12)',
+      angle: 'rgba(47,59,82,.14)',
+      tooltipBg: '#ffffff',
+      tooltipBorder: 'rgba(47,59,82,.2)',
+      tooltipTitle: '#1f2937',
+      tooltipBody: 'rgba(31,41,55,.8)',
+      radarOverallLabel: '#2f3b52',
+      radarArea: 'rgba(215,169,63,.12)',
+      radarBorder: 'rgba(177,132,41,.75)',
+    };
+  }
+
+  return {
+    overallLine: '#ffffff',
+    overallBg: 'rgba(255,255,255,.05)',
+    legend: 'rgba(240,244,255,.65)',
+    tick: 'rgba(240,244,255,.4)',
+    tickSoft: 'rgba(240,244,255,.35)',
+    tickSofter: 'rgba(240,244,255,.3)',
+    grid: 'rgba(255,255,255,.06)',
+    angle: 'rgba(255,255,255,.08)',
+    tooltipBg: '#1a2235',
+    tooltipBorder: 'rgba(255,255,255,.12)',
+    tooltipTitle: '#F0F4FF',
+    tooltipBody: 'rgba(240,244,255,.75)',
+    radarOverallLabel: '#ffffff',
+    radarArea: 'rgba(245,200,66,.1)',
+    radarBorder: 'rgba(245,200,66,.7)',
+  };
 }
 
 // в”Ђв”Ђ OVERALL TOGGLE в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
@@ -374,8 +427,19 @@ function filteredEntries() {
 }
 
 function renderCharts() {
-  renderLineChart();
-  renderRadarChart();
+  applyInsightsVisibility();
+  if (settings.insights.showProgress) {
+    renderLineChart();
+  } else if (lineChart) {
+    lineChart.destroy();
+    lineChart = null;
+  }
+  if (settings.insights.showRadar) {
+    renderRadarChart();
+  } else if (radarChart) {
+    radarChart.destroy();
+    radarChart = null;
+  }
   renderInsights();
 }
 
@@ -405,6 +469,7 @@ function filteredModalEntries() {
 }
 
 function renderModalChart() {
+  const chartTheme = getChartTheme();
   const data = filteredModalEntries();
   const labels = data.map(e => {
     const d = new Date(e.date);
@@ -433,13 +498,13 @@ function renderModalChart() {
     {
       label: 'Overall',
       data: data.map(e => e.overall),
-      borderColor: '#fff',
-      backgroundColor: 'rgba(255,255,255,.05)',
+      borderColor: chartTheme.overallLine,
+      backgroundColor: chartTheme.overallBg,
       borderWidth: 3,
       borderDash: [6,3],
       pointRadius: modalPoint + 1,
       pointHoverRadius: modalPoint + 3,
-      pointBackgroundColor: '#fff',
+      pointBackgroundColor: chartTheme.overallLine,
       tension: 0.4,
       fill: false,
     }
@@ -457,17 +522,17 @@ function renderModalChart() {
       plugins: {
         legend: {
           labels: {
-            color: 'rgba(240,244,255,.65)',
+            color: chartTheme.legend,
             font: { family: 'DM Mono', size: 11 },
             boxWidth: 14, padding: 16,
           }
         },
         tooltip: {
-          backgroundColor: '#1a2235',
-          borderColor: 'rgba(255,255,255,.12)',
+          backgroundColor: chartTheme.tooltipBg,
+          borderColor: chartTheme.tooltipBorder,
           borderWidth: 1,
-          titleColor: '#F0F4FF',
-          bodyColor: 'rgba(240,244,255,.75)',
+          titleColor: chartTheme.tooltipTitle,
+          bodyColor: chartTheme.tooltipBody,
           titleFont: { family: 'DM Mono', size: 12 },
           bodyFont: { family: 'DM Mono', size: 12 },
           padding: 14,
@@ -476,12 +541,12 @@ function renderModalChart() {
       scales: {
         y: {
           min: 0, max: 9,
-          ticks: { stepSize: 1.5, color: 'rgba(240,244,255,.4)', font: { family: 'DM Mono', size: 11 } },
-          grid: { color: 'rgba(255,255,255,.06)' },
+          ticks: { stepSize: 1.5, color: chartTheme.tick, font: { family: 'DM Mono', size: 11 } },
+          grid: { color: chartTheme.grid },
           border: { display: false },
         },
         x: {
-          ticks: { color: 'rgba(240,244,255,.4)', font: { family: 'DM Mono', size: 11 }, maxRotation: 0 },
+          ticks: { color: chartTheme.tick, font: { family: 'DM Mono', size: 11 }, maxRotation: 0 },
           grid: { display: false },
           border: { display: false },
         }
@@ -491,6 +556,7 @@ function renderModalChart() {
 }
 
 function renderLineChart() {
+  const chartTheme = getChartTheme();
   const data = filteredEntries();
   const labels = data.map(e => {
     const d = new Date(e.date);
@@ -514,13 +580,13 @@ function renderLineChart() {
     {
       label: 'Overall',
       data: data.map(e => e.overall),
-      borderColor: '#fff',
-      backgroundColor: 'rgba(255,255,255,.05)',
+      borderColor: chartTheme.overallLine,
+      backgroundColor: chartTheme.overallBg,
       borderWidth: 2.5,
       borderDash: [5,3],
       pointRadius: point + 1,
       pointHoverRadius: point + 2,
-      pointBackgroundColor: '#fff',
+      pointBackgroundColor: chartTheme.overallLine,
       tension: 0.4,
       fill: false,
     }
@@ -539,18 +605,18 @@ function renderLineChart() {
       plugins: {
         legend: {
           labels: {
-            color: 'rgba(240,244,255,.55)',
+            color: chartTheme.legend,
             font: { family: 'DM Mono', size: 10 },
             boxWidth: 12,
             padding: 12,
           }
         },
         tooltip: {
-          backgroundColor: '#1a2235',
-          borderColor: 'rgba(255,255,255,.1)',
+          backgroundColor: chartTheme.tooltipBg,
+          borderColor: chartTheme.tooltipBorder,
           borderWidth: 1,
-          titleColor: '#F0F4FF',
-          bodyColor: 'rgba(240,244,255,.7)',
+          titleColor: chartTheme.tooltipTitle,
+          bodyColor: chartTheme.tooltipBody,
           titleFont: { family: 'DM Mono', size: 11 },
           bodyFont: { family: 'DM Mono', size: 11 },
           padding: 12,
@@ -561,15 +627,15 @@ function renderLineChart() {
           min: 0, max: 9,
           ticks: {
             stepSize: 1.5,
-            color: 'rgba(240,244,255,.35)',
+            color: chartTheme.tickSoft,
             font: { family: 'DM Mono', size: 10 },
           },
-          grid: { color: 'rgba(255,255,255,.05)' },
+          grid: { color: chartTheme.grid },
           border: { display: false },
         },
         x: {
           ticks: {
-            color: 'rgba(240,244,255,.35)',
+            color: chartTheme.tickSoft,
             font: { family: 'DM Mono', size: 10 },
             maxRotation: 0,
           },
@@ -582,6 +648,7 @@ function renderLineChart() {
 }
 
 function renderRadarChart() {
+  const chartTheme = getChartTheme();
   const avgs = {};
   SECTIONS.forEach(s => {
     avgs[s.key] = entries.length ? entries.reduce((a,e) => a + e[s.key], 0) / entries.length : 0;
@@ -590,7 +657,7 @@ function renderRadarChart() {
 
   const labels = [...SECTIONS.map(s => s.label), 'Overall'];
   const dataVals = [...SECTIONS.map(s => avgs[s.key]), avgs.overall];
-  const colors = [...SECTIONS.map(s => s.color), '#ffffff'];
+  const colors = [...SECTIONS.map(s => s.color), chartTheme.radarOverallLabel];
 
   if (radarChart) radarChart.destroy();
   const ctx = document.getElementById('radarChart').getContext('2d');
@@ -601,8 +668,8 @@ function renderRadarChart() {
       datasets: [{
         label: 'Average Band',
         data: dataVals,
-        backgroundColor: 'rgba(245,200,66,.1)',
-        borderColor: 'rgba(245,200,66,.7)',
+        backgroundColor: chartTheme.radarArea,
+        borderColor: chartTheme.radarBorder,
         borderWidth: 2,
         pointBackgroundColor: colors,
         pointBorderColor: 'transparent',
@@ -617,13 +684,13 @@ function renderRadarChart() {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: '#1a2235',
-          titleColor: '#F0F4FF',
-          bodyColor: 'rgba(240,244,255,.7)',
+          backgroundColor: chartTheme.tooltipBg,
+          titleColor: chartTheme.tooltipTitle,
+          bodyColor: chartTheme.tooltipBody,
           titleFont: { family: 'DM Mono', size: 11 },
           bodyFont: { family: 'DM Mono', size: 12 },
           padding: 12,
-          borderColor: 'rgba(255,255,255,.1)',
+          borderColor: chartTheme.tooltipBorder,
           borderWidth: 1,
           callbacks: { label: ctx => ` ${ctx.raw.toFixed(1)}` }
         }
@@ -633,12 +700,12 @@ function renderRadarChart() {
           min: 0, max: 9,
           ticks: {
             stepSize: 3,
-            color: 'rgba(240,244,255,.3)',
+            color: chartTheme.tickSofter,
             font: { family: 'DM Mono', size: 9 },
             backdropColor: 'transparent',
           },
-          grid: { color: 'rgba(255,255,255,.08)' },
-          angleLines: { color: 'rgba(255,255,255,.08)' },
+          grid: { color: chartTheme.angle },
+          angleLines: { color: chartTheme.angle },
           pointLabels: {
             color: colors,
             font: { family: 'Outfit', size: 12, weight: '500' },
@@ -651,6 +718,12 @@ function renderRadarChart() {
 
 // в”Ђв”Ђ TIPS в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 function renderTips() {
+  if (!settings.insights.showTips) {
+    const tipsEl = document.getElementById('tipsSection');
+    if (tipsEl) tipsEl.innerHTML = '';
+    return;
+  }
+
   if (!entries.length) {
     document.getElementById('tipsSection').innerHTML = '';
     return;
@@ -677,7 +750,13 @@ function renderTips() {
 
 // в”Ђв”Ђ AI TIPS в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 function updateAiTipsVisibility() {
-  document.getElementById('aiTipsCard').style.display = entries.length >= 2 ? 'block' : 'none';
+  const card = document.getElementById('aiTipsCard');
+  if (!card) return;
+  if (!settings.insights.showAiCoach) {
+    card.style.display = 'none';
+    return;
+  }
+  card.style.display = entries.length >= 2 ? 'block' : 'none';
 }
 
 function pickRepresentativeEntries() {
@@ -800,8 +879,53 @@ function switchTab(name) {
   document.querySelectorAll('.page').forEach(p => {
     p.classList.toggle('active', p.id === 'page-' + name);
   });
-  if (name === 'charts') { renderCharts(); renderTips(); }
+  if (name === 'charts') { renderCharts(); renderTips(); updateAiTipsVisibility(); }
   if (name === 'history') renderHistory();
+}
+
+function normalizeSettings(raw) {
+  const fallback = DEFAULT_SETTINGS;
+  const safe = {
+    theme: raw?.theme === 'light' || raw?.theme === 'dark' ? raw.theme : 'system',
+    insights: {}
+  };
+
+  for (const key of Object.keys(fallback.insights)) {
+    if (key === 'showAiCoach') {
+      safe.insights[key] = false;
+      continue;
+    }
+    safe.insights[key] = raw?.insights?.[key] !== false;
+  }
+  return safe;
+}
+
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (!raw) return normalizeSettings(DEFAULT_SETTINGS);
+    return normalizeSettings(JSON.parse(raw));
+  } catch {
+    return normalizeSettings(DEFAULT_SETTINGS);
+  }
+}
+
+function applyInsightsVisibility() {
+  const visibilityMap = [
+    ['kpiGrid', settings.insights.showKpis],
+    ['comparisonCard', settings.insights.showComparison],
+    ['targetsCard', settings.insights.showTargets],
+    ['lineChartContainer', settings.insights.showProgress],
+    ['radarCard', settings.insights.showRadar],
+    ['tipsSection', settings.insights.showTips],
+    ['aiTipsCard', settings.insights.showAiCoach],
+  ];
+
+  visibilityMap.forEach(([id, visible]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.display = visible ? '' : 'none';
+  });
 }
 
 function loadTargets() {

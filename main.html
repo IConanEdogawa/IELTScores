@@ -7,14 +7,19 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#9B1C2E">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
+<script src="js/theme.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="css/styles.css"/>
+<link rel="stylesheet" href="css/theme-light.css"/>
 </head>
 <body>
 
 <!-- HEADER -->
 <div class="header">
-  <a class="about-link" href="about.html">About</a>
+  <div class="header-links">
+    <a class="header-link" href="settings.html">Settings</a>
+    <a class="header-link about-link" href="about.html">About</a>
+  </div>
   <div class="nylc-brand">
     <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
       <!-- Torch flame -->
@@ -160,7 +165,7 @@
     <canvas id="lineChart" height="180"></canvas>
   </div>
 
-  <div class="chart-container">
+  <div class="chart-container" id="radarCard">
     <div class="chart-label">Skills Radar</div>
     <div class="radar-wrap">
       <canvas id="radarChart"></canvas>
