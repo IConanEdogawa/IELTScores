@@ -50,15 +50,73 @@ const MOCK_ENTRIES = [
   { date: '2025-03-28', listening: 7.5, reading: 7.0, writing: 6.5, speaking: 6.5, overall: 7.0, manualOverall: true,  mood: 'Best session yet, calm and focused.' },
 ];
 
+const ENTRIES_KEY = 'nylc_ielts_entries';
+const ENTRIES_VERSION = 1;
+
+function isValidDateString(value) {
+  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+function clampBand(value) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return null;
+  return Math.min(9, Math.max(0, Math.round(num * 2) / 2));
+}
+
+function normalizeEntry(raw) {
+  if (!raw || !isValidDateString(raw.date)) return null;
+
+  const entry = {
+    date: raw.date,
+    manualOverall: !!raw.manualOverall,
+    mood: String(raw.mood || '').trim(),
+  };
+
+  let sum = 0;
+  for (const section of SECTIONS) {
+    const safe = clampBand(raw[section.key]);
+    if (safe === null) return null;
+    entry[section.key] = safe;
+    sum += safe;
+  }
+
+  const rawOverall = clampBand(raw.overall);
+  entry.overall = rawOverall === null ? Math.round((sum / 4) * 2) / 2 : rawOverall;
+  return entry;
+}
+
 function loadEntries() {
   try {
-    const raw = localStorage.getItem('nylc_ielts_entries');
-    return raw ? JSON.parse(raw) : MOCK_ENTRIES;
-  } catch { return MOCK_ENTRIES; }
+    const raw = localStorage.getItem(ENTRIES_KEY);
+    if (!raw) return MOCK_ENTRIES;
+
+    const parsed = JSON.parse(raw);
+    const list = Array.isArray(parsed) ? parsed : parsed?.entries;
+    if (!Array.isArray(list)) return MOCK_ENTRIES;
+
+    const dedup = new Map();
+    for (const item of list) {
+      const normalized = normalizeEntry(item);
+      if (!normalized) continue;
+      dedup.set(normalized.date, normalized);
+    }
+
+    const result = Array.from(dedup.values()).sort((a, b) => a.date.localeCompare(b.date));
+    return result.length ? result : MOCK_ENTRIES;
+  } catch {
+    return MOCK_ENTRIES;
+  }
 }
 
 function saveEntries() {
-  try { localStorage.setItem('nylc_ielts_entries', JSON.stringify(entries)); } catch {}
+  try {
+    const payload = {
+      version: ENTRIES_VERSION,
+      entries: [...entries].sort((a, b) => a.date.localeCompare(b.date)),
+      updatedAt: new Date().toISOString(),
+    };
+    localStorage.setItem(ENTRIES_KEY, JSON.stringify(payload));
+  } catch {}
 }
 
 let entries = loadEntries();
@@ -71,6 +129,7 @@ let historyFilter = 'all';
 let lineChart = null;
 let radarChart = null;
 let targets = loadTargets();
+let editingEntryDate = null;
 
 // в”Ђв”Ђ INIT в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 document.getElementById('entryDate').value = new Date().toISOString().split('T')[0];
@@ -133,17 +192,12 @@ function scoreColor(v) {
 
 // в”Ђв”Ђ OVERALL TOGGLE в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 function toggleOverall() {
-  overallEnabled = !overallEnabled;
-  const tog = document.getElementById('overallToggle');
-  tog.classList.toggle('on', overallEnabled);
-  document.getElementById('overallSliderWrap').style.display = overallEnabled ? 'block' : 'none';
+  setOverallMode(!overallEnabled);
 }
 
 // в”Ђв”Ђ MOOD TOGGLE в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 function toggleMood() {
-  moodOpen = !moodOpen;
-  document.getElementById('moodExpand').classList.toggle('open', moodOpen);
-  document.getElementById('moodArrow').textContent = moodOpen ? '\u2715' : '\u{1F4AC}';
+  setMoodOpen(!moodOpen);
 }
 
 // в”Ђв”Ђ ADD ENTRY в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
@@ -160,26 +214,59 @@ function addEntry() {
     sum += v;
   });
 
+  const calculatedOverall = Math.round((sum / 4) * 2) / 2;
   if (overallEnabled) {
     entry.overall = parseFloat(document.getElementById('slider-overall').value);
+    if (Math.abs(entry.overall - calculatedOverall) > 0.001) {
+      const ok = window.confirm(
+        `Manual overall (${entry.overall.toFixed(1)}) differs from calculated (${calculatedOverall.toFixed(1)}). Save manual value?`
+      );
+      if (!ok) {
+        showToast('Save cancelled');
+        return;
+      }
+    }
   } else {
-    const avg = sum / 4;
-    entry.overall = Math.round(avg * 2) / 2;
+    entry.overall = calculatedOverall;
   }
 
-  entries.unshift(entry);
+  if (editingEntryDate) {
+    const sameDateOther = entries.findIndex(e => e.date === date && e.date !== editingEntryDate);
+    if (sameDateOther >= 0) {
+      const shouldReplace = window.confirm('Another entry with this date exists. Replace it?');
+      if (!shouldReplace) {
+        showToast('Update cancelled');
+        return;
+      }
+      entries.splice(sameDateOther, 1);
+    }
+    entries = entries.filter(e => e.date !== editingEntryDate);
+    entries.push(entry);
+  } else {
+    const duplicateIndex = entries.findIndex(e => e.date === date);
+    if (duplicateIndex >= 0) {
+      const shouldReplace = window.confirm('Entry for this date already exists. Replace it?');
+      if (!shouldReplace) {
+        showToast('Save cancelled');
+        return;
+      }
+      entries[duplicateIndex] = entry;
+    } else {
+      entries.push(entry);
+    }
+  }
   entries.sort((a,b) => a.date.localeCompare(b.date));
   saveEntries();
 
-  // reset mood
-  document.getElementById('moodNote').value = '';
-  if (moodOpen) toggleMood();
+  const wasEditing = Boolean(editingEntryDate);
+  resetEntryForm();
+  exitEditMode();
 
   renderHistory();
   renderCharts();
   renderTips();
   updateAiTipsVisibility();
-  showToast('Entry saved \u2713');
+  showToast(wasEditing ? 'Entry updated \u2713' : 'Entry saved \u2713');
   switchTab('history');
 }
 
@@ -195,7 +282,6 @@ function renderHistory() {
   const total = sorted.length;
   // sorted is newest first, so "prev" = next in sorted array (older entry)
   el.innerHTML = sorted.map((e, i) => entryWrapHTML(e, i, total, sorted[i+1])).join('');
-  initSwipes();
 }
 
 function cardColor(i, total) {
@@ -207,20 +293,12 @@ function cardColor(i, total) {
 
 function entryWrapHTML(e, i, total, prev) {
   const col = cardColor(i, total);
-  return `
-  <div class="entry-wrap" id="wrap-${e.date}">
-    <div class="entry-delete-bg">
-      <div class="entry-delete-btn">
-        <span class="del-icon">\u{1F5D1}</span>
-        <span>Delete</span>
-      </div>
-    </div>
-    ${entryCardHTML(e, col, prev)}
-  </div>`;
+  return entryCardHTML(e, col, prev);
 }
 
 function entryCardHTML(e, col, prev) {
   col = col || CARD_COLORS[0];
+  const isEditing = editingEntryDate === e.date;
   const d = new Date(e.date);
   const dateStr = d.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
   const bars = SECTIONS.map(s => `
@@ -244,74 +322,50 @@ function entryCardHTML(e, col, prev) {
   }
 
   return `
-  <div class="entry-card" data-date="${e.date}"
+  <div class="entry-card ${isEditing ? 'is-editing' : ''}" data-date="${e.date}"
        style="background:${col.bg};border-color:${col.border}">
     <div class="entry-top">
       <div>
         <div class="entry-date">${dateStr}</div>
+        <button type="button" class="btn-entry-edit" onclick="startEditEntry('${e.date}')">Edit</button>
         ${e.manualOverall ? '<div style="font-size:10px;color:var(--muted2);margin-top:2px;font-family:DM Mono,monospace">official</div>' : ''}
         ${deltaHTML}
       </div>
-      <div class="entry-overall">${e.overall.toFixed(1)}<span>overall</span></div>
+      <div class="entry-actions">
+        <button type="button" class="btn-entry-delete" onclick="deleteEntry('${e.date}')">Delete</button>
+        <div class="entry-overall">${e.overall.toFixed(1)}<span>overall</span></div>
+      </div>
     </div>
     <div class="entry-bars">${bars}</div>
     ${moodHTML}
   </div>`;
 }
 
-// в”Ђв”Ђ SWIPE TO DELETE в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
-function initSwipes() {
-  document.querySelectorAll('.entry-card').forEach(card => {
-    let startX = 0, currentX = 0, dragging = false;
-    const THRESHOLD = 80;
-
-    card.addEventListener('touchstart', e => {
-      startX = e.touches[0].clientX;
-      dragging = true;
-    }, { passive: true });
-
-    card.addEventListener('touchmove', e => {
-      if (!dragging) return;
-      currentX = e.touches[0].clientX - startX;
-      if (currentX > 0) { currentX = 0; return; }
-      const clamp = Math.max(currentX, -160);
-      card.style.transform = `translateX(${clamp}px)`;
-      const wrap = card.closest('.entry-wrap');
-      if (Math.abs(clamp) > 40) wrap.classList.add('swiped');
-      else wrap.classList.remove('swiped');
-    }, { passive: true });
-
-    card.addEventListener('touchend', () => {
-      dragging = false;
-      const wrap = card.closest('.entry-wrap');
-      if (Math.abs(currentX) >= THRESHOLD) {
-        card.style.transform = `translateX(-160px)`;
-        wrap.classList.add('swiped');
-        wrap.querySelector('.entry-delete-bg').addEventListener('click', () => {
-          deleteEntry(card.dataset.date);
-        }, { once: true });
-      } else {
-        card.style.transform = `translateX(0)`;
-        wrap.classList.remove('swiped');
-      }
-      currentX = 0;
-    });
-  });
-}
-
 function deleteEntry(date) {
-  const wrap = document.getElementById('wrap-' + date);
-  const card = wrap.querySelector('.entry-card');
-  card.classList.add('deleting');
-  setTimeout(() => {
-    entries = entries.filter(e => e.date !== date);
+  const targetDate = String(date).trim();
+  const removeAndRefresh = () => {
+    const before = entries.length;
+    entries = entries.filter(e => String(e.date).trim() !== targetDate);
+    if (entries.length === before) {
+      showToast('Delete failed: entry not found');
+      return;
+    }
     saveEntries();
     renderHistory();
     renderCharts();
     renderTips();
     updateAiTipsVisibility();
     showToast('Entry deleted');
-  }, 300);
+  };
+
+  const card = document.querySelector(`.entry-card[data-date="${targetDate}"]`);
+  if (!card) {
+    removeAndRefresh();
+    return;
+  }
+
+  card.classList.add('deleting');
+  setTimeout(removeAndRefresh, 300);
 }
 
 // в”Ђв”Ђ CHARTS в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
@@ -846,35 +900,28 @@ async function importEntries(event) {
     const data = JSON.parse(text);
     if (!Array.isArray(data)) throw new Error('Invalid JSON structure');
 
-    const normalized = data
-      .filter(e => e && typeof e.date === 'string')
-      .map(e => {
-        const item = {
-          date: e.date,
-          manualOverall: !!e.manualOverall,
-          mood: String(e.mood || '').trim(),
-        };
-        let sum = 0;
-        SECTIONS.forEach(s => {
-          const v = Number(e[s.key]);
-          const safe = Number.isFinite(v) ? Math.min(9, Math.max(0, v)) : 0;
-          item[s.key] = safe;
-          sum += safe;
-        });
-        const o = Number(e.overall);
-        item.overall = Number.isFinite(o) ? Math.min(9, Math.max(0, o)) : Math.round((sum / 4) * 2) / 2;
-        return item;
-      });
+    const dedup = new Map();
+    let skipped = 0;
 
+    for (const rawItem of data) {
+      const normalized = normalizeEntry(rawItem);
+      if (!normalized) {
+        skipped += 1;
+        continue;
+      }
+      dedup.set(normalized.date, normalized);
+    }
+
+    const normalized = Array.from(dedup.values()).sort((a, b) => a.date.localeCompare(b.date));
     if (!normalized.length) throw new Error('No valid entries found');
 
-    entries = normalized.sort((a, b) => a.date.localeCompare(b.date));
+    entries = normalized;
     saveEntries();
     renderHistory();
     renderCharts();
     renderTips();
     updateAiTipsVisibility();
-    showToast('Import complete');
+    showToast(`Import complete: ${normalized.length} ok, ${skipped} skipped`);
   } catch {
     showToast('Import failed');
   } finally {
@@ -883,13 +930,87 @@ async function importEntries(event) {
 }
 
 function cancelEdit() {
+  if (!editingEntryDate) return;
+  resetEntryForm();
+  exitEditMode();
+  renderHistory();
+  showToast('Edit mode cancelled');
+}
+
+function setOverallMode(enabled) {
+  overallEnabled = !!enabled;
+  const tog = document.getElementById('overallToggle');
+  if (tog) tog.classList.toggle('on', overallEnabled);
+  const wrap = document.getElementById('overallSliderWrap');
+  if (wrap) wrap.style.display = overallEnabled ? 'block' : 'none';
+}
+
+function setMoodOpen(open) {
+  moodOpen = !!open;
+  const expand = document.getElementById('moodExpand');
+  if (expand) expand.classList.toggle('open', moodOpen);
+  const arrow = document.getElementById('moodArrow');
+  if (arrow) arrow.textContent = moodOpen ? '\u2715' : '\u{1F4AC}';
+}
+
+function setSliderValue(key, value) {
+  const slider = document.getElementById('slider-' + key);
+  if (!slider) return;
+  slider.value = value;
+  updateSliderFill(slider);
+  const score = document.getElementById('score-' + key);
+  if (score) {
+    score.textContent = Number(value).toFixed(1);
+    score.style.color = scoreColor(Number(value));
+  }
+}
+
+function resetEntryForm() {
+  document.getElementById('entryDate').value = new Date().toISOString().split('T')[0];
+  SECTIONS.forEach(s => setSliderValue(s.key, 6.0));
+  setSliderValue('overall', 6.0);
+  setOverallMode(false);
+  document.getElementById('moodNote').value = '';
+  setMoodOpen(false);
+}
+
+function exitEditMode() {
+  editingEntryDate = null;
   const btn = document.getElementById('cancelEditBtn');
   if (btn) btn.style.display = 'none';
   const title = document.getElementById('entryFormTitle');
   if (title) title.textContent = 'New Test Result';
   const saveBtn = document.getElementById('saveEntryBtn');
   if (saveBtn) saveBtn.textContent = 'Save Result';
-  showToast('Edit mode cancelled');
+}
+
+function startEditEntry(date) {
+  const entry = entries.find(e => e.date === date);
+  if (!entry) {
+    showToast('Entry not found');
+    return;
+  }
+
+  editingEntryDate = entry.date;
+  document.getElementById('entryDate').value = entry.date;
+  SECTIONS.forEach(s => setSliderValue(s.key, entry[s.key]));
+
+  setOverallMode(!!entry.manualOverall);
+  setSliderValue('overall', entry.overall);
+
+  document.getElementById('moodNote').value = entry.mood || '';
+  setMoodOpen(Boolean((entry.mood || '').trim()));
+
+  const btn = document.getElementById('cancelEditBtn');
+  if (btn) btn.style.display = 'inline-flex';
+  const title = document.getElementById('entryFormTitle');
+  if (title) title.textContent = 'Edit Test Result';
+  const saveBtn = document.getElementById('saveEntryBtn');
+  if (saveBtn) saveBtn.textContent = 'Update Result';
+
+  switchTab('add');
+  renderHistory();
+  showToast('Editing entry');
 }
 
 function renderInsights() {

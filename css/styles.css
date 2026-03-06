@@ -437,6 +437,7 @@ textarea#moodNote:focus { border-color: rgba(167,139,250,.5); }
   border: 1px solid var(--border);
   border-radius: var(--r);
   padding: 16px 18px;
+  margin-bottom: 12px;
   animation: slideIn .3s ease both;
   position: relative;
   transform: translateX(0);
@@ -467,11 +468,56 @@ textarea#moodNote:focus { border-color: rgba(167,139,250,.5); }
   font-size: 12px;
   color: var(--muted);
 }
+.btn-entry-edit {
+  margin-top: 6px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,.03);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 10px;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn-entry-edit:hover {
+  color: var(--text);
+  border-color: rgba(255,255,255,.2);
+}
+.entry-card.is-editing {
+  box-shadow: 0 0 0 1px rgba(245,200,66,.45), 0 14px 34px rgba(245,200,66,.1);
+}
 .entry-overall {
   font-family: 'DM Serif Display', serif;
   font-size: 28px;
   color: var(--gold);
   line-height: 1;
+}
+.entry-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+.btn-entry-delete {
+  border: 1px solid rgba(251,113,133,.35);
+  background: rgba(251,113,133,.10);
+  color: #ffb4bf;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 10px;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn-entry-delete:hover {
+  border-color: rgba(251,113,133,.6);
+  background: rgba(251,113,133,.18);
+  color: #ffd0d7;
 }
 .entry-overall span {
   font-family: 'DM Mono', monospace;
@@ -850,6 +896,10 @@ canvas { display: block; }
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 12px;
+  min-height: 92px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .kpi-label {
@@ -858,14 +908,17 @@ canvas { display: block; }
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: .5px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .kpi-value {
   color: var(--gold);
   font-family: 'DM Serif Display', serif;
-  font-size: 28px;
-  line-height: 1;
+  font-size: 36px;
+  line-height: .95;
 }
 
 @media (max-width: 540px) {
