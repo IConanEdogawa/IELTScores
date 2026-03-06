@@ -370,11 +370,7 @@ function deleteEntry(date) {
 
 // в”Ђв”Ђ CHARTS в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 function filteredEntries() {
-  if (currentPeriod === 'all') return entries;
-  const now = new Date();
-  const days = currentPeriod === 'month' ? 30 : 7;
-  const cutoff = new Date(now - days * 86400000).toISOString().split('T')[0];
-  return entries.filter(e => e.date >= cutoff);
+  return filterByPeriod(entries, currentPeriod);
 }
 
 function renderCharts() {
@@ -405,11 +401,7 @@ function setModalPeriod(p, btn) {
 }
 
 function filteredModalEntries() {
-  if (modalPeriod === 'all') return entries;
-  const now = new Date();
-  const days = modalPeriod === 'month' ? 30 : 7;
-  const cutoff = new Date(now - days * 86400000).toISOString().split('T')[0];
-  return entries.filter(e => e.date >= cutoff);
+  return filterByPeriod(entries, modalPeriod);
 }
 
 function renderModalChart() {
@@ -418,6 +410,13 @@ function renderModalChart() {
     const d = new Date(e.date);
     return d.toLocaleDateString('en-GB', { day:'numeric', month:'short' });
   });
+  const modalPoint = getPointRadius(labels.length, true);
+  const canvas = document.getElementById('lineChartModal');
+  const body = canvas.closest('.chart-modal-body');
+  const bodyWidth = body ? body.clientWidth : 700;
+  const desiredWidth = Math.max(bodyWidth, labels.length * 62, 520);
+  canvas.style.width = `${desiredWidth}px`;
+  canvas.width = desiredWidth;
   const datasets = [
     ...SECTIONS.map(s => ({
       label: s.label,
@@ -425,7 +424,8 @@ function renderModalChart() {
       borderColor: s.color,
       backgroundColor: s.color + '15',
       borderWidth: 2.5,
-      pointRadius: 5,
+      pointRadius: modalPoint,
+      pointHoverRadius: modalPoint + 2,
       pointBackgroundColor: s.color,
       tension: 0.4,
       fill: false,
@@ -437,7 +437,8 @@ function renderModalChart() {
       backgroundColor: 'rgba(255,255,255,.05)',
       borderWidth: 3,
       borderDash: [6,3],
-      pointRadius: 6,
+      pointRadius: modalPoint + 1,
+      pointHoverRadius: modalPoint + 3,
       pointBackgroundColor: '#fff',
       tension: 0.4,
       fill: false,
@@ -495,6 +496,7 @@ function renderLineChart() {
     const d = new Date(e.date);
     return d.toLocaleDateString('en-GB', { day:'numeric', month:'short' });
   });
+  const point = getPointRadius(labels.length, false);
 
   const datasets = [
     ...SECTIONS.map(s => ({
@@ -503,7 +505,8 @@ function renderLineChart() {
       borderColor: s.color,
       backgroundColor: s.color + '15',
       borderWidth: 2,
-      pointRadius: 4,
+      pointRadius: point,
+      pointHoverRadius: point + 1,
       pointBackgroundColor: s.color,
       tension: 0.4,
       fill: false,
@@ -515,7 +518,8 @@ function renderLineChart() {
       backgroundColor: 'rgba(255,255,255,.05)',
       borderWidth: 2.5,
       borderDash: [5,3],
-      pointRadius: 5,
+      pointRadius: point + 1,
+      pointHoverRadius: point + 2,
       pointBackgroundColor: '#fff',
       tension: 0.4,
       fill: false,
@@ -755,9 +759,33 @@ Give your analysis in plain text, no markdown, no bullet points.`;
 // в”Ђв”Ђ PERIOD в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
 function setPeriod(p, btn) {
   currentPeriod = p;
-  document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#page-charts .chart-period .period-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   renderLineChart();
+}
+
+function filterByPeriod(list, period) {
+  if (period === 'all') return list;
+  if (!list.length) return [];
+
+  // Use latest logged test date as reference, not system "today".
+  const latestDate = list.reduce((max, e) => (e.date > max ? e.date : max), list[0].date);
+  const latest = new Date(latestDate + 'T00:00:00');
+  const days = period === 'month' ? 30 : 7;
+  const cutoffDate = new Date(latest.getTime() - days * 86400000).toISOString().split('T')[0];
+  return list.filter(e => e.date >= cutoffDate);
+}
+
+function getPointRadius(pointCount, isModal) {
+  const mobile = window.innerWidth <= 540;
+  if (mobile) {
+    if (pointCount >= 18) return isModal ? 2 : 1;
+    if (pointCount >= 12) return 2;
+    return 3;
+  }
+  if (pointCount >= 24) return isModal ? 3 : 2;
+  if (pointCount >= 14) return isModal ? 4 : 3;
+  return isModal ? 5 : 4;
 }
 
 // в”Ђв”Ђ TABS в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ

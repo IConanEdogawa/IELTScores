@@ -698,7 +698,7 @@ canvas { display: block; }
 }
 .chart-modal-body::-webkit-scrollbar { height: 4px; }
 .chart-modal-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 99px; }
-#lineChartModal { display: block; height: 320px; min-width: 700px; }
+#lineChartModal { display: block; height: 320px; min-width: 0; }
 
 /* в”Ђв”Ђ RADAR в”Ђв”Ђ */
 .radar-wrap {
