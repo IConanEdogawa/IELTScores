@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = 'ielts-tracker-v6';
+﻿const CACHE_NAME = 'ielts-tracker-v7';
 const OFFLINE_URL = '/offline.html';
 const APP_SHELL = [
   '/',
@@ -93,3 +93,4 @@ self.addEventListener('fetch', event => {
     })
   );
 });
+

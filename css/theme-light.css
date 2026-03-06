@@ -84,6 +84,7 @@ html[data-theme='light'] .glow-right {
 
 html[data-theme='light'] .hero-card,
 html[data-theme='light'] .info-card,
+html[data-theme='light'] .team-card,
 html[data-theme='light'] .stats-row,
 html[data-theme='light'] .card {
   background: linear-gradient(145deg, rgba(248, 251, 255, .98), rgba(239, 245, 253, .96));
@@ -92,6 +93,7 @@ html[data-theme='light'] .card {
 
 html[data-theme='light'] .lead,
 html[data-theme='light'] .info-card p,
+html[data-theme='light'] .team-card p,
 html[data-theme='light'] .card-sub,
 html[data-theme='light'] .hint,
 html[data-theme='light'] .stat-label {
@@ -110,6 +112,7 @@ html[data-theme='light'] .card-kicker {
 }
 
 html[data-theme='light'] .info-card h2,
+html[data-theme='light'] .team-card h2,
 html[data-theme='light'] .toggle-title,
 html[data-theme='light'] .stat-value {
   color: #1f2a42;

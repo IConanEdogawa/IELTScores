@@ -6,56 +6,300 @@
   <title>Offline | IELTS Tracker</title>
   <style>
     :root {
-      --bg: #0a0e1a;
-      --surface: #111827;
-      --border: rgba(255,255,255,.1);
+      --bg: #0a0f1c;
+      --surface: #121b2f;
+      --surface2: #17243d;
+      --border: rgba(255,255,255,.11);
       --text: #f0f4ff;
-      --muted: rgba(240,244,255,.65);
+      --muted: rgba(240,244,255,.68);
       --gold: #f5c842;
+      --teal: #2dd4bf;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       min-height: 100vh;
-      display: grid;
-      place-items: center;
-      background: radial-gradient(circle at 10% 10%, rgba(245,200,66,.14), transparent 38%), var(--bg);
+      background:
+        radial-gradient(circle at 10% 10%, rgba(245,200,66,.16), transparent 35%),
+        radial-gradient(circle at 88% 88%, rgba(45,212,191,.14), transparent 40%),
+        var(--bg);
       color: var(--text);
       font-family: 'Outfit', system-ui, sans-serif;
-      padding: 18px;
+      padding: 16px;
+      display: grid;
+      place-items: center;
     }
+
     .card {
-      width: min(460px, 100%);
+      width: min(680px, 100%);
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 18px;
+      border-radius: 20px;
       padding: 20px;
+      box-shadow: 0 24px 64px rgba(0,0,0,.35);
     }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .badge {
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      border: 1px solid rgba(245,200,66,.36);
+      color: var(--gold);
+      background: rgba(245,200,66,.08);
+    }
+
+    .live-state {
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(251,113,133,.45);
+      background: rgba(251,113,133,.12);
+      color: #ffbdc7;
+      font-size: 11px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    .live-state.online {
+      border-color: rgba(45,212,191,.46);
+      background: rgba(45,212,191,.12);
+      color: #92efe3;
+    }
+
     h1 {
-      font-size: 24px;
+      font-size: clamp(1.6rem, 4.6vw, 2.2rem);
       margin-bottom: 8px;
+      line-height: 1.2;
     }
+
+    h1 em {
+      color: var(--gold);
+      font-style: italic;
+    }
+
     p {
       color: var(--muted);
       line-height: 1.6;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       font-size: 14px;
     }
-    .btn {
-      border: 1px solid rgba(245,200,66,.45);
-      background: rgba(245,200,66,.1);
+
+    .interactive {
+      margin: 14px 0;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--surface2);
+      padding: 10px;
+    }
+
+    .sky-wrap {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.08);
+      min-height: 190px;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(245,200,66,.11), transparent 34%),
+        radial-gradient(circle at 80% 80%, rgba(45,212,191,.1), transparent 36%),
+        #0f1729;
+    }
+
+    #sky {
+      width: 100%;
+      height: 190px;
+      display: block;
+      cursor: crosshair;
+    }
+
+    .interactive-note {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .tips-box {
+      border: 1px dashed var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(255,255,255,.02);
+      margin-top: 10px;
+    }
+
+    .tip-label {
+      font-size: 10px;
+      letter-spacing: .6px;
+      text-transform: uppercase;
       color: var(--gold);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      margin-bottom: 6px;
+    }
+
+    .tip-text {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.55;
+      min-height: 42px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .btn {
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
       border-radius: 999px;
       padding: 8px 14px;
       font-size: 12px;
       cursor: pointer;
+      transition: all .2s ease;
+    }
+
+    .btn:hover {
+      border-color: rgba(255,255,255,.26);
+    }
+
+    .btn.gold {
+      border-color: rgba(245,200,66,.45);
+      background: rgba(245,200,66,.1);
+      color: var(--gold);
+    }
+
+    @media (max-width: 620px) {
+      .card {
+        padding: 16px;
+      }
+      .actions {
+        flex-direction: column;
+      }
+      .btn {
+        width: 100%;
+      }
     }
   </style>
 </head>
 <body>
   <main class="card">
-    <h1>You are offline</h1>
-    <p>The app is still available. Reconnect to use online features like update checks and AI analysis.</p>
-    <button class="btn" type="button" onclick="location.href='main.html'">Open Tracker</button>
+    <div class="status-row">
+      <div class="badge">Offline Studio</div>
+      <div class="live-state" id="liveState">offline</div>
+    </div>
+
+    <h1>No internet, but still in <em>control.</em></h1>
+    <p>Core tracking works offline. Use this screen as a mini study break: build your constellation and cycle quick IELTS prompts.</p>
+
+    <section class="interactive">
+      <div class="sky-wrap">
+        <canvas id="sky" width="640" height="190"></canvas>
+      </div>
+      <div class="interactive-note">Tap/click to place stars. Every new star connects to the previous one.</div>
+    </section>
+
+    <section class="tips-box">
+      <div class="tip-label">Offline prompt</div>
+      <div class="tip-text" id="tipText"></div>
+    </section>
+
+    <div class="actions">
+      <button class="btn gold" type="button" onclick="location.href='main.html'">Open Tracker</button>
+      <button class="btn" type="button" onclick="nextTip()">Next prompt</button>
+      <button class="btn" type="button" onclick="checkConnectionNow()">Check connection</button>
+      <button class="btn" type="button" onclick="clearSky()">Clear sky</button>
+    </div>
   </main>
+
+  <script>
+    const tips = [
+      'Write one Task 2 intro in 3 sentences: position + 2 reasons.',
+      'Pick a Speaking Part 2 topic and talk for 60 seconds without stopping.',
+      'Skim one article and list 5 keywords in under 2 minutes.',
+      'Do 10 minutes of listening and write down only numbers/dates.',
+      'Paraphrase this phrase 3 ways: "There are several reasons for this trend."',
+      'Write one clear topic sentence for each IELTS Writing body paragraph.',
+      'Answer: "What is your biggest reading weakness?" in 2 lines.',
+      'Set a micro-goal for your next test and keep it specific.'
+    ];
+
+    let tipIndex = 0;
+    const tipText = document.getElementById('tipText');
+    const liveState = document.getElementById('liveState');
+
+    function updateStatus() {
+      const online = navigator.onLine;
+      liveState.textContent = online ? 'online' : 'offline';
+      liveState.classList.toggle('online', online);
+    }
+
+    function nextTip() {
+      tipIndex = (tipIndex + 1) % tips.length;
+      tipText.textContent = tips[tipIndex];
+    }
+
+    function checkConnectionNow() {
+      updateStatus();
+      if (navigator.onLine) {
+        location.href = 'main.html';
+      }
+    }
+
+    const canvas = document.getElementById('sky');
+    const ctx = canvas.getContext('2d');
+    const stars = [];
+
+    function drawSky() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 1; i < stars.length; i += 1) {
+        ctx.beginPath();
+        ctx.moveTo(stars[i - 1].x, stars[i - 1].y);
+        ctx.lineTo(stars[i].x, stars[i].y);
+        ctx.strokeStyle = 'rgba(146, 239, 227, .35)';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+      }
+
+      stars.forEach((star, i) => {
+        const radius = i === stars.length - 1 ? 3.4 : 2.5;
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, radius, 0, Math.PI * 2);
+        ctx.fillStyle = i === stars.length - 1 ? '#f5c842' : '#d8f8f2';
+        ctx.fill();
+      });
+    }
+
+    function addStar(evt) {
+      const rect = canvas.getBoundingClientRect();
+      const x = ((evt.clientX - rect.left) / rect.width) * canvas.width;
+      const y = ((evt.clientY - rect.top) / rect.height) * canvas.height;
+      stars.push({ x, y });
+      if (stars.length > 45) stars.shift();
+      drawSky();
+    }
+
+    function clearSky() {
+      stars.length = 0;
+      drawSky();
+    }
+
+    canvas.addEventListener('click', addStar);
+    window.addEventListener('online', updateStatus);
+    window.addEventListener('offline', updateStatus);
+
+    tipText.textContent = tips[tipIndex];
+    updateStatus();
+    drawSky();
+  </script>
 </body>
 </html>
