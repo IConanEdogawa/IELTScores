@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>Theme Browser | IELTS Tracker</title>
+  <script src="js/theme.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/theme-browser.css"/>
+  <link rel="stylesheet" href="css/theme-light.css"/>
+</head>
+<body>
+  <main class="theme-browser-page">
+    <div class="header-row">
+      <a class="btn-pill" href="settings.html">Back to Settings</a>
+      <a class="btn-pill" href="main.html">Open Tracker</a>
+    </div>
+
+    <section class="hero-card">
+      <div class="badge">Theme Browser</div>
+      <h1>Choose a calm <em>study mood.</em></h1>
+      <p>Preview and apply available themes instantly inside the app.</p>
+    </section>
+
+    <div class="status" id="browserStatus"></div>
+
+    <section class="themes-grid">
+      <article class="theme-card" data-theme-option="system">
+        <div class="theme-title-row">
+          <h2>System</h2>
+          <span class="theme-chip">Auto</span>
+        </div>
+        <p>Follows your device preference.</p>
+        <div class="preview preview-system">
+          <span></span><span></span><span></span>
+        </div>
+        <button class="btn-apply" type="button" onclick="applyThemeChoice('system')">Use System</button>
+      </article>
+
+      <article class="theme-card" data-theme-option="light">
+        <div class="theme-title-row">
+          <h2>Soft Light</h2>
+          <span class="theme-chip">Gentle</span>
+        </div>
+        <p>Clean and soft, with low-contrast light surfaces.</p>
+        <div class="preview preview-light">
+          <span></span><span></span><span></span>
+        </div>
+        <button class="btn-apply" type="button" onclick="applyThemeChoice('light')">Use Soft Light</button>
+      </article>
+
+      <article class="theme-card" data-theme-option="dark">
+        <div class="theme-title-row">
+          <h2>Deep Dark</h2>
+          <span class="theme-chip">Focus</span>
+        </div>
+        <p>High focus in low-light study sessions.</p>
+        <div class="preview preview-dark">
+          <span></span><span></span><span></span>
+        </div>
+        <button class="btn-apply" type="button" onclick="applyThemeChoice('dark')">Use Deep Dark</button>
+      </article>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="js/theme-browser.js"></script>
+  <script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+  }
+  </script>
+</body>
+</html>

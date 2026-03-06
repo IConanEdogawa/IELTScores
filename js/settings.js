@@ -29,6 +29,7 @@ let settings = loadSettings();
 
 renderInsightToggles();
 bindThemeSelect();
+initThemeBrowserHint();
 initSupportHint();
 initUpdateStatus();
 
@@ -121,6 +122,32 @@ function bindThemeSelect() {
     }
     showToast('Theme preference saved');
   });
+}
+
+function initThemeBrowserHint() {
+  const hint = document.getElementById('themeHint');
+  if (!hint) return;
+  if (!isStandalonePwa()) {
+    hint.textContent = 'Theme Browser is available in the installed app only.';
+    return;
+  }
+  if (!navigator.onLine) {
+    hint.textContent = 'Connect to internet to browse theme samples.';
+    return;
+  }
+  hint.textContent = 'Changes apply immediately. Theme Browser is ready.';
+}
+
+function openThemeBrowser() {
+  if (!isStandalonePwa()) {
+    showToast('Theme Browser is available in the installed app');
+    return;
+  }
+  if (!navigator.onLine) {
+    showToast('Connect to internet to browse themes');
+    return;
+  }
+  window.location.href = 'theme-browser.html';
 }
 
 function initSupportHint() {
