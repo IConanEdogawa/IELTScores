@@ -4,78 +4,133 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <title>Settings | IELTS Tracker</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#F4F3EE">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="icon" href="icons/icon-192.png">
   <script src="js/theme.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="preload" href="vendor/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/app.css"/>
   <link rel="stylesheet" href="css/settings.css"/>
-  <link rel="stylesheet" href="css/theme-light.css"/>
 </head>
 <body>
-  <main class="settings-page">
-    <div class="top-row">
-      <button class="btn-ghost" type="button" onclick="goBack()">Back</button>
-      <a class="btn-ghost link" href="main.html">Tracker</a>
+  <header class="appbar" id="appbar">
+    <button class="icon-btn" type="button" id="backBtn" aria-label="Back"><svg class="ico"><use href="icons/sprite.svg#i-chevron-left"/></svg></button>
+    <div class="grow appbar-title">Settings</div>
+    <a class="btn btn-sm" href="main.html"><svg class="ico ico-sm"><use href="icons/sprite.svg#i-layout-dashboard"/></svg>Tracker</a>
+  </header>
+
+  <main class="content settings">
+    <div class="page-head">
+      <div>
+        <div class="eyebrow">Preferences</div>
+        <h1 class="page-title">Settings</h1>
+        <p class="page-sub">Appearance, backups and app updates.</p>
+      </div>
     </div>
 
-    <header class="hero">
-      <h1>Settings</h1>
-      <p>Theme, backup, and install options for your tracker.</p>
-    </header>
-
-    <section class="panel">
-      <h2 class="panel-title">Theme</h2>
-      <p class="panel-sub">Pick what feels easiest on the eyes while you study.</p>
-      <label class="field-label" for="themeSelect">Preferred theme</label>
-      <select id="themeSelect" class="field-input">
-        <option value="light">Light</option>
-        <option value="dark">Dark</option>
-        <option value="system">System</option>
-      </select>
-    </section>
-
-    <section class="panel">
-      <h2 class="panel-title">Data</h2>
-      <p class="panel-sub">Scores are stored in SQLite on this phone. Export or import a JSON backup anytime.</p>
-      <div class="row-actions">
-        <button class="btn-ghost solid" type="button" onclick="exportEntries()">Export JSON</button>
-        <button class="btn-ghost solid" type="button" onclick="document.getElementById('importFile').click()">Import JSON</button>
-        <input type="file" id="importFile" accept=".json,application/json" onchange="importEntries(event)" hidden />
+    <section class="group">
+      <h2 class="group-title">Appearance</h2>
+      <div class="card group-card">
+        <div class="row">
+          <span class="row-ico"><svg class="ico"><use href="icons/sprite.svg#i-sun"/></svg></span>
+          <div class="row-text"><div class="row-title">Theme</div><div class="row-sub">Easy on the eyes, day or night</div></div>
+        </div>
+        <div class="seg theme-seg" role="radiogroup" aria-label="Theme" id="themeSeg">
+          <button type="button" role="radio" data-theme-value="light" aria-checked="false"><svg class="ico ico-sm"><use href="icons/sprite.svg#i-sun"/></svg>Light</button>
+          <button type="button" role="radio" data-theme-value="dark" aria-checked="false"><svg class="ico ico-sm"><use href="icons/sprite.svg#i-moon"/></svg>Dark</button>
+          <button type="button" role="radio" data-theme-value="system" aria-checked="false"><svg class="ico ico-sm"><use href="icons/sprite.svg#i-monitor"/></svg>System</button>
+        </div>
       </div>
-      <div class="hint" id="dataHint"></div>
     </section>
 
-    <section class="panel">
-      <h2 class="panel-title">Support</h2>
-      <p class="panel-sub">Get help with a pre-filled diagnostics snapshot.</p>
-      <div class="row-actions">
-        <button class="btn-ghost solid" type="button" onclick="contactSupport()">Contact support</button>
-        <button class="btn-ghost solid" type="button" onclick="copyDiagnostics()">Copy diagnostics</button>
+    <section class="group">
+      <h2 class="group-title">Your data</h2>
+      <div class="card group-card">
+        <div class="data-stat">
+          <div>
+            <div class="data-num num" id="dataCount">—</div>
+            <div class="row-sub">results stored on this device</div>
+          </div>
+          <span class="pill"><svg class="ico"><use href="icons/sprite.svg#i-check"/></svg><span id="dbState">SQLite</span></span>
+        </div>
+        <div class="row">
+          <span class="row-ico"><svg class="ico"><use href="icons/sprite.svg#i-download"/></svg></span>
+          <div class="row-text"><div class="row-title">Export backup</div><div class="row-sub">Download all results as JSON</div></div>
+          <button class="btn btn-sm" type="button" id="exportBtn">Export</button>
+        </div>
+        <div class="row">
+          <span class="row-ico"><svg class="ico"><use href="icons/sprite.svg#i-upload"/></svg></span>
+          <div class="row-text"><div class="row-title">Import backup</div><div class="row-sub">Replaces current results with the file</div></div>
+          <button class="btn btn-sm" type="button" id="importBtn">Import</button>
+          <input type="file" id="importFile" accept=".json,application/json" hidden />
+        </div>
+        <div class="hint" id="dataHint"></div>
       </div>
-      <div class="hint" id="supportHint"></div>
     </section>
 
-    <section class="panel">
-      <h2 class="panel-title">Updates</h2>
-      <p class="panel-sub">Manual checks work in the installed app.</p>
-      <div class="row-actions">
-        <button class="btn-ghost solid" id="checkUpdatesBtn" type="button" onclick="checkForUpdates()">Check for updates</button>
+    <section class="group">
+      <h2 class="group-title">App</h2>
+      <div class="card group-card">
+        <div class="row">
+          <span class="row-ico"><svg class="ico"><use href="icons/sprite.svg#i-refresh-cw"/></svg></span>
+          <div class="row-text"><div class="row-title">Updates</div><div class="row-sub" id="updateStatus">Checking…</div></div>
+          <button class="btn btn-sm" id="checkUpdatesBtn" type="button">Check</button>
+        </div>
+        <div class="row">
+          <span class="row-ico"><svg class="ico"><use href="icons/sprite.svg#i-smartphone"/></svg></span>
+          <div class="row-text"><div class="row-title">Install app</div><div class="row-sub" id="installStatus"></div></div>
+          <button class="btn btn-sm" id="installAppBtn" type="button">Install</button>
+        </div>
       </div>
-      <div class="hint" id="updateStatus"></div>
     </section>
 
-    <section class="panel">
-      <h2 class="panel-title">Install app</h2>
-      <p class="panel-sub">Add IELTS Tracker to your home screen for faster access.</p>
-      <div class="row-actions">
-        <button class="btn-ghost solid" id="installAppBtn" type="button" onclick="installApp()">Install app</button>
+    <section class="group">
+      <h2 class="group-title">About</h2>
+      <div class="card about-card">
+        <div class="about-top">
+          <span class="brand-mark">i</span>
+          <div>
+            <div class="about-name">IELTS Tracker</div>
+            <div class="row-sub">Made for students of <b>New York Learning Center</b></div>
+          </div>
+        </div>
+        <div class="teacher">
+          <div class="teacher-avatar serif" aria-hidden="true">Z</div>
+          <div class="row-text">
+            <div class="row-title">Zack</div>
+            <div class="row-sub">Your teacher · questions, feedback or help</div>
+          </div>
+          <a class="btn btn-sm btn-primary" id="contactBtn" href="https://t.me/Bro_Zuck" target="_blank" rel="noopener"><svg class="ico ico-sm"><use href="icons/sprite.svg#i-send"/></svg>Telegram</a>
+        </div>
+        <div class="about-links">
+          <a class="btn btn-sm btn-ghost" href="https://github.com/IConanEdogawa" target="_blank" rel="noopener">Developer · @IConanEdogawa</a>
+          <button class="btn btn-sm btn-ghost" type="button" id="copyDiagBtn"><svg class="ico ico-sm"><use href="icons/sprite.svg#i-copy"/></svg>Copy diagnostics</button>
+        </div>
+        <div class="hint" id="supportHint"></div>
       </div>
-      <div class="hint" id="installStatus"></div>
     </section>
+
+    <p class="foot mono" id="versionLabel"></p>
   </main>
+
+  <dialog class="sheet" id="confirmDialog">
+    <div class="sheet-grip"></div>
+    <div class="sheet-body">
+      <div class="sheet-title" id="confirmTitle">Are you sure?</div>
+      <p class="sheet-text" id="confirmText" style="margin-top:8px"></p>
+      <div class="sheet-actions">
+        <button class="btn" type="button" id="confirmCancel">Cancel</button>
+        <button class="btn btn-primary" type="button" id="confirmOk">Confirm</button>
+      </div>
+    </div>
+  </dialog>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="vendor/sqljs/sql-wasm.js"></script>
   <script src="js/db.js"></script>
+  <script src="js/ui.js"></script>
   <script src="js/settings.js"></script>
   <script>
   if ('serviceWorker' in navigator) {

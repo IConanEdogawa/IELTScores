@@ -26,7 +26,7 @@
     const resolved = resolveTheme(stored);
     document.documentElement.setAttribute('data-theme', resolved);
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', resolved === 'light' ? '#E8EEF4' : '#0E141C');
+    if (meta) meta.setAttribute('content', resolved === 'light' ? '#F4F3EE' : '#0B0C0E');
     if (previous && previous !== resolved) {
       window.dispatchEvent(new CustomEvent('themechange', { detail: { theme: resolved } }));
     }

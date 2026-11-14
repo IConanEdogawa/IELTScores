@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "IELTS Tracker",
   "short_name": "IELTS",
   "description": "Track IELTS progress across listening, reading, writing and speaking.",
@@ -6,8 +6,8 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#E8EEF4",
-  "theme_color": "#0F766E",
+  "background_color": "#F4F3EE",
+  "theme_color": "#F4F3EE",
   "icons": [
     {
       "src": "icons/icon-192.png",

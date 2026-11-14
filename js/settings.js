@@ -1,23 +1,32 @@
+/* Settings page: theme, backup, updates, install, about. */
+const { showToast } = UI;
 const SETTINGS_KEY = 'nylc_ielts_settings';
-const DEFAULT_SETTINGS = { theme: 'light' };
-const SECTIONS = [
-  { key: 'listening' },
-  { key: 'reading' },
-  { key: 'writing' },
-  { key: 'speaking' },
-];
-
+const SECTIONS = ['listening', 'reading', 'writing', 'speaking'];
 const SUPPORT_HANDLE = '@Bro_Zuck';
-const SUPPORT_URL = 'https://t.me/Bro_Zuck';
-let deferredInstallPrompt = null;
-let settings = loadLocalThemeSettings();
-let dbReady = false;
 
-bindThemeSelect();
-initSupportHint();
-initUpdateStatus();
-initInstallStatus();
-bootDb();
+let deferredInstallPrompt = null;
+let dbReady = false;
+let reloadReady = false;
+
+function loadThemePref() {
+  const t = UI.readSettings().theme;
+  return t === 'light' || t === 'dark' || t === 'system' ? t : 'light';
+}
+
+function init() {
+  document.getElementById('backBtn').addEventListener('click', goBack);
+  bindThemeSeg();
+  document.getElementById('exportBtn').addEventListener('click', exportEntries);
+  document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
+  document.getElementById('importFile').addEventListener('change', importEntries);
+  document.getElementById('checkUpdatesBtn').addEventListener('click', checkForUpdates);
+  document.getElementById('installAppBtn').addEventListener('click', installApp);
+  document.getElementById('copyDiagBtn').addEventListener('click', copyDiagnostics);
+  initUpdateStatus();
+  initInstallStatus();
+  showVersion();
+  bootDb();
+}
 
 window.addEventListener('beforeinstallprompt', event => {
   event.preventDefault();
@@ -35,243 +44,174 @@ async function bootDb() {
   try {
     await IeltsDB.init();
     dbReady = true;
-    setDataHint('SQLite ready on this device.');
+    refreshDataCount();
+    document.getElementById('dbState').textContent = 'SQLite ready';
   } catch {
-    setDataHint('Could not open SQLite database.');
-    showToast('Database failed to open');
+    document.getElementById('dbState').textContent = 'SQLite error';
+    setDataHint('Could not open the local database.');
+    showToast('Database failed to open', 'info');
   }
 }
 
+function refreshDataCount() {
+  if (!dbReady) return;
+  document.getElementById('dataCount').textContent = String(IeltsDB.listEntries().length);
+}
+
 function goBack() {
-  if (window.history.length > 1) {
+  if (document.referrer && new URL(document.referrer).origin === location.origin && window.history.length > 1) {
     window.history.back();
     return;
   }
   window.location.href = 'main.html';
 }
 
-function loadLocalThemeSettings() {
+function bindThemeSeg() {
+  const seg = document.getElementById('themeSeg');
+  const sync = () => {
+    const pref = loadThemePref();
+    seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', b.dataset.themeValue === pref ? 'true' : 'false'));
+  };
+  seg.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    UI.setThemePreference(b.dataset.themeValue);
+    sync();
+    showToast(`Theme: ${b.textContent.trim()}`, b.dataset.themeValue === 'dark' ? 'moon' : b.dataset.themeValue === 'system' ? 'monitor' : 'sun');
+  }));
+  sync();
+}
+
+async function showVersion() {
+  const el = document.getElementById('versionLabel');
   try {
-    const raw = localStorage.getItem(SETTINGS_KEY);
-    if (!raw) return { ...DEFAULT_SETTINGS };
-    const parsed = JSON.parse(raw);
-    const theme = parsed?.theme === 'light' || parsed?.theme === 'dark' || parsed?.theme === 'system'
-      ? parsed.theme
-      : 'light';
-    return { theme };
+    const keys = 'caches' in window ? await caches.keys() : [];
+    const k = keys.find(n => n.startsWith('ielts-tracker-'));
+    el.textContent = k ? `build ${k.replace('ielts-tracker-', '')}` : 'IELTS Tracker';
   } catch {
-    return { ...DEFAULT_SETTINGS };
+    el.textContent = 'IELTS Tracker';
   }
-}
-
-function saveLocalThemeSettings() {
-  try {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-  } catch {}
-  if (dbReady) {
-    try { IeltsDB.saveSettings(settings); } catch {}
-  }
-}
-
-function bindThemeSelect() {
-  const select = document.getElementById('themeSelect');
-  if (!select) return;
-  select.value = settings.theme;
-  select.addEventListener('change', function () {
-    settings.theme = this.value;
-    saveLocalThemeSettings();
-    if (typeof window.__applyThemeFromSettings === 'function') {
-      window.__applyThemeFromSettings();
-    }
-    showToast('Theme saved');
-  });
-}
-
-function initSupportHint() {
-  const hint = document.getElementById('supportHint');
-  if (!hint) return;
-  hint.textContent = `Support contact: ${SUPPORT_HANDLE}`;
 }
 
 function buildDiagnostics() {
-  const mode = isStandalonePwa() ? 'installed-pwa' : 'browser-tab';
   return [
     'IELTS Tracker diagnostics',
     `time=${new Date().toISOString()}`,
     `user_agent=${navigator.userAgent}`,
     `online=${navigator.onLine}`,
-    `mode=${mode}`,
+    `mode=${isStandalonePwa() ? 'installed-pwa' : 'browser-tab'}`,
     `service_worker_supported=${'serviceWorker' in navigator}`,
-    `theme_pref=${settings.theme}`,
-    `sqlite_ready=${dbReady}`
+    `theme_pref=${loadThemePref()}`,
+    `sqlite_ready=${dbReady}`,
+    `entries=${dbReady ? IeltsDB.listEntries().length : 'n/a'}`,
   ].join('\n');
 }
 
 async function copyDiagnostics() {
-  const text = buildDiagnostics();
   try {
-    await navigator.clipboard.writeText(text);
-    showToast('Diagnostics copied');
+    await navigator.clipboard.writeText(buildDiagnostics());
+    showToast('Diagnostics copied', 'copy');
+    document.getElementById('supportHint').textContent = `Paste it into a message to Zack (${SUPPORT_HANDLE}) if something looks wrong.`;
   } catch {
-    showToast('Could not copy diagnostics');
+    showToast('Could not copy diagnostics', 'info');
   }
-}
-
-async function contactSupport() {
-  window.location.href = SUPPORT_URL;
 }
 
 function isStandalonePwa() {
   return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 }
 
+function isIosLike() {
+  return /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
+}
+
+/* ---------- updates ---------- */
+function setUpdateStatus(message) {
+  const s = document.getElementById('updateStatus');
+  if (s) s.textContent = message;
+}
+
+function markReloadReady() {
+  reloadReady = true;
+  const btn = document.getElementById('checkUpdatesBtn');
+  btn.disabled = false;
+  btn.textContent = 'Reload';
+  btn.classList.add('btn-primary');
+  setUpdateStatus('Update downloaded. Reload to apply it.');
+  showToast('Update available', 'download');
+}
+
 function initUpdateStatus() {
   const btn = document.getElementById('checkUpdatesBtn');
-  if (!btn) return;
-
-  if (!isStandalonePwa()) {
-    btn.disabled = true;
-    setUpdateStatus('Install the app to use manual update checks.');
-    return;
-  }
-
   if (!('serviceWorker' in navigator)) {
     btn.disabled = true;
-    setUpdateStatus('Service worker is not supported on this device.');
+    setUpdateStatus('Not supported on this browser.');
     return;
   }
-
-  setUpdateStatus('Ready to check for updates.');
-}
-
-function isIosLike() {
-  const ua = navigator.userAgent.toLowerCase();
-  return /iphone|ipad|ipod/.test(ua);
-}
-
-function initInstallStatus() {
-  const btn = document.getElementById('installAppBtn');
-  const status = document.getElementById('installStatus');
-  if (!btn || !status) return;
-
-  if (isStandalonePwa()) {
-    btn.disabled = true;
-    status.textContent = 'App is already installed on this device.';
-    return;
-  }
-
-  btn.disabled = false;
-
-  if (deferredInstallPrompt) {
-    status.textContent = 'Install is available. Tap the button to continue.';
-    return;
-  }
-
-  if (isIosLike()) {
-    status.textContent = 'On iPhone/iPad: Share → Add to Home Screen.';
-    return;
-  }
-
-  status.textContent = 'If install is not shown, open browser menu and choose Install app.';
-}
-
-async function installApp() {
-  if (isStandalonePwa()) {
-    showToast('Already installed');
-    initInstallStatus();
-    return;
-  }
-
-  if (deferredInstallPrompt) {
-    deferredInstallPrompt.prompt();
-    const choice = await deferredInstallPrompt.userChoice;
-    if (choice?.outcome === 'accepted') {
-      showToast('Install started');
-    } else {
-      showToast('Install cancelled');
-    }
-    deferredInstallPrompt = null;
-    initInstallStatus();
-    return;
-  }
-
-  if (isIosLike()) {
-    showToast('Use Share → Add to Home Screen');
-  } else {
-    showToast('Use browser menu → Install app');
-  }
-}
-
-function setUpdateStatus(message) {
-  const status = document.getElementById('updateStatus');
-  if (status) status.textContent = message;
-}
-
-function setDataHint(message) {
-  const hint = document.getElementById('dataHint');
-  if (hint) hint.textContent = message;
+  setUpdateStatus(isStandalonePwa() ? 'Check for a newer version of the app.' : 'Check for a newer version (works best in the installed app).');
 }
 
 async function checkForUpdates() {
   const btn = document.getElementById('checkUpdatesBtn');
-  if (!btn) return;
-
-  if (!isStandalonePwa()) {
-    setUpdateStatus('Update checks are available only in the installed app.');
-    return;
-  }
-
-  if (!navigator.onLine) {
-    setUpdateStatus('No internet connection. Connect and try again.');
-    return;
-  }
-
-  if (!('serviceWorker' in navigator)) {
-    setUpdateStatus('Service worker is not available on this device.');
-    return;
-  }
+  if (reloadReady) { window.location.reload(); return; }
+  if (!navigator.onLine) { setUpdateStatus('No internet connection. Connect and try again.'); return; }
+  if (!('serviceWorker' in navigator)) { setUpdateStatus('Service worker is not available on this device.'); return; }
 
   btn.disabled = true;
-  setUpdateStatus('Checking for updates...');
-
+  setUpdateStatus('Checking for updates…');
   try {
-    const registration = await navigator.serviceWorker.getRegistration('/sw.js')
-      || await navigator.serviceWorker.getRegistration();
-
-    if (!registration) {
-      setUpdateStatus('No service worker registration found yet. Open Tracker once, then retry.');
-      return;
-    }
-
+    const registration = await navigator.serviceWorker.getRegistration('/sw.js') || await navigator.serviceWorker.getRegistration();
+    if (!registration) { setUpdateStatus('Open the tracker once online, then retry.'); return; }
     await registration.update();
-
-    if (registration.waiting) {
-      setUpdateStatus('Update downloaded. Reload the app to apply it.');
-      showToast('Update available');
-      return;
-    }
-
+    if (registration.waiting) { markReloadReady(); return; }
     if (registration.installing) {
-      setUpdateStatus('Update is being installed in the background.');
-      registration.installing.addEventListener('statechange', () => {
-        if (registration.waiting || registration.installing?.state === 'installed') {
-          setUpdateStatus('Update downloaded. Reload the app to apply it.');
-          showToast('Update available');
-        }
+      setUpdateStatus('Downloading update…');
+      const worker = registration.installing;
+      worker.addEventListener('statechange', () => {
+        if (worker.state === 'installed' || worker.state === 'activated') markReloadReady();
       });
       return;
     }
-
-    setUpdateStatus('No new update found right now.');
+    setUpdateStatus('You have the latest version.');
+    showToast('Up to date');
   } catch {
     setUpdateStatus('Update check failed. Try again in a moment.');
   } finally {
-    btn.disabled = false;
+    if (!reloadReady) btn.disabled = false;
   }
 }
 
-function isValidDateString(value) {
-  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
+/* ---------- install ---------- */
+function initInstallStatus() {
+  const btn = document.getElementById('installAppBtn');
+  const status = document.getElementById('installStatus');
+  if (isStandalonePwa()) {
+    btn.disabled = true;
+    btn.textContent = 'Installed';
+    status.textContent = 'Already on this device.';
+    return;
+  }
+  btn.disabled = false;
+  if (deferredInstallPrompt) status.textContent = 'Add it to your home screen.';
+  else if (isIosLike()) status.textContent = 'iPhone/iPad: Share → Add to Home Screen.';
+  else status.textContent = 'Or use the browser menu → Install app.';
+}
+
+async function installApp() {
+  if (isStandalonePwa()) { showToast('Already installed'); initInstallStatus(); return; }
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    const choice = await deferredInstallPrompt.userChoice;
+    showToast(choice?.outcome === 'accepted' ? 'Install started' : 'Install cancelled', choice?.outcome === 'accepted' ? 'check' : 'x');
+    deferredInstallPrompt = null;
+    initInstallStatus();
+    return;
+  }
+  showToast(isIosLike() ? 'Use Share → Add to Home Screen' : 'Use browser menu → Install app', 'info');
+}
+
+/* ---------- data ---------- */
+function setDataHint(message) {
+  const hint = document.getElementById('dataHint');
+  if (hint) hint.textContent = message;
 }
 
 function clampBand(value) {
@@ -281,102 +221,74 @@ function clampBand(value) {
 }
 
 function normalizeEntry(raw) {
-  if (!raw || !isValidDateString(raw.date)) return null;
-
-  const entry = {
-    date: raw.date,
-    manualOverall: !!raw.manualOverall,
-    mood: String(raw.mood || '').trim(),
-  };
-
+  if (!raw || typeof raw.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(raw.date)) return null;
+  const entry = { date: raw.date, manualOverall: !!raw.manualOverall, mood: String(raw.mood || '').trim() };
   let sum = 0;
-  for (const section of SECTIONS) {
-    const safe = clampBand(raw[section.key]);
+  for (const key of SECTIONS) {
+    const safe = clampBand(raw[key]);
     if (safe === null) return null;
-    entry[section.key] = safe;
+    entry[key] = safe;
     sum += safe;
   }
-
   const rawOverall = clampBand(raw.overall);
   entry.overall = rawOverall === null ? Math.round((sum / 4) * 2) / 2 : rawOverall;
   return entry;
 }
 
 function exportEntries() {
-  if (!dbReady) {
-    setDataHint('Database is still opening.');
-    showToast('Database not ready');
-    return;
-  }
-
+  if (!dbReady) { setDataHint('Database is still opening.'); showToast('Database not ready', 'clock'); return; }
   const entries = IeltsDB.listEntries();
-  if (!entries.length) {
-    setDataHint('No entries to export yet.');
-    showToast('No entries to export');
-    return;
-  }
-
-  const content = JSON.stringify(entries, null, 2);
-  const blob = new Blob([content], { type: 'application/json;charset=utf-8' });
+  if (!entries.length) { setDataHint('No results to export yet.'); showToast('Nothing to export', 'info'); return; }
+  const blob = new Blob([JSON.stringify(entries, null, 2)], { type: 'application/json;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'ielts-tracker-export.json';
+  a.download = `ielts-tracker-export-${UI.localISODate()}.json`;
   document.body.appendChild(a);
   a.click();
   a.remove();
-  URL.revokeObjectURL(url);
-  setDataHint(`Exported ${entries.length} entries from SQLite.`);
-  showToast('Export complete');
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  setDataHint(`Exported ${entries.length} result${entries.length === 1 ? '' : 's'}.`);
+  showToast('Export complete', 'download');
 }
 
 async function importEntries(event) {
   const file = event.target.files?.[0];
   if (!file) return;
-
-  if (!dbReady) {
-    setDataHint('Database is still opening.');
-    showToast('Database not ready');
-    event.target.value = '';
-    return;
-  }
-
+  if (!dbReady) { setDataHint('Database is still opening.'); showToast('Database not ready', 'clock'); event.target.value = ''; return; }
   try {
-    const text = await file.text();
-    const data = JSON.parse(text);
-    if (!Array.isArray(data)) throw new Error('Invalid JSON structure');
-
+    const data = JSON.parse(await file.text());
+    const list = Array.isArray(data) ? data : Array.isArray(data?.entries) ? data.entries : null;
+    if (!list) throw new Error('Invalid JSON structure');
     const dedup = new Map();
     let skipped = 0;
-
-    for (const rawItem of data) {
-      const normalized = normalizeEntry(rawItem);
-      if (!normalized) {
-        skipped += 1;
-        continue;
-      }
-      dedup.set(normalized.date, normalized);
+    for (const raw of list) {
+      const n = normalizeEntry(raw);
+      if (!n) { skipped += 1; continue; }
+      dedup.set(n.date, n);
     }
-
-    const normalized = Array.from(dedup.values()).sort((a, b) => a.date.localeCompare(b.date));
+    const normalized = [...dedup.values()].sort((a, b) => a.date.localeCompare(b.date));
     if (!normalized.length) throw new Error('No valid entries found');
-
+    const existing = IeltsDB.listEntries().length;
+    if (existing) {
+      const ok = await UI.confirmAction({
+        title: 'Replace your results?',
+        text: `Your ${existing} saved result${existing === 1 ? '' : 's'} will be replaced with ${normalized.length} from the file. Export first if you want a copy.`,
+        ok: 'Replace', danger: true,
+      });
+      if (!ok) { setDataHint('Import cancelled.'); return; }
+    }
     IeltsDB.replaceAllEntries(normalized);
     await IeltsDB.persistNow();
-    setDataHint(`Imported ${normalized.length} entries${skipped ? `, skipped ${skipped}` : ''}.`);
-    showToast('Import complete');
+    refreshDataCount();
+    setDataHint(`Imported ${normalized.length} result${normalized.length === 1 ? '' : 's'}${skipped ? `, skipped ${skipped}` : ''}.`);
+    showToast('Import complete', 'upload');
   } catch {
     setDataHint('Import failed. Use a valid JSON export.');
-    showToast('Import failed');
+    showToast('Import failed', 'info');
   } finally {
     event.target.value = '';
   }
 }
 
-function showToast(message) {
-  const toast = document.getElementById('toast');
-  if (!toast) return;
-  toast.textContent = message;
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 2200);
-}
+init();
