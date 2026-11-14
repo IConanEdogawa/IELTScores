@@ -1,112 +1,268 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <title>IELTS Tracker</title>
+<meta name="description" content="Log IELTS results, compare them with your targets and see progress across all four skills."/>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0F766E">
+<meta name="theme-color" content="#F4F3EE">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/icon-192.png">
 <script src="js/theme.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="css/styles.css"/>
-<link rel="stylesheet" href="css/theme-light.css"/>
+<link rel="preload" href="vendor/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="vendor/fonts/instrument-serif-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="vendor/flatpickr/flatpickr.min.css"/>
+<link rel="stylesheet" href="css/app.css"/>
+<link rel="stylesheet" href="css/main.css"/>
 </head>
 <body>
 
-<header class="header">
-  <a class="settings-link" href="settings.html">Settings</a>
-  <h1 class="brand">IELTS Tracker</h1>
-  <p class="tagline">Log your scores and watch the gap to your target close.</p>
-</header>
+<div class="layout">
+  <!-- Desktop sidebar -->
+  <aside class="sidebar" aria-label="Navigation">
+    <a class="brand" href="main.html">
+      <span class="brand-mark">i</span>
+      <span class="brand-text"><span class="brand-name">IELTS Tracker</span><span class="brand-sub">New York Learning Center</span></span>
+    </a>
+    <nav class="side-nav" role="tablist" aria-label="Main">
+      <button class="side-link tab" type="button" role="tab" data-tab="progress"><svg class="ico"><use href="icons/sprite.svg#i-layout-dashboard"/></svg>Progress</button>
+      <button class="side-link tab" type="button" role="tab" data-tab="add"><svg class="ico"><use href="icons/sprite.svg#i-plus"/></svg>Log result</button>
+      <button class="side-link tab" type="button" role="tab" data-tab="history"><svg class="ico"><use href="icons/sprite.svg#i-history"/></svg>History</button>
+    </nav>
+    <div class="side-foot">
+      <a class="side-link" href="settings.html"><svg class="ico"><use href="icons/sprite.svg#i-settings"/></svg>Settings</a>
+      <button class="side-link" type="button" data-theme-toggle><svg class="ico theme-ico-light"><use href="icons/sprite.svg#i-moon"/></svg><svg class="ico theme-ico-dark"><use href="icons/sprite.svg#i-sun"/></svg><span class="theme-toggle-label">Dark mode</span></button>
+    </div>
+  </aside>
 
-<nav class="tabs" role="tablist" aria-label="Main">
-  <button class="tab" type="button" role="tab" data-tab="add" aria-selected="false" tabindex="-1" onclick="switchTab('add')">Log</button>
-  <button class="tab" type="button" role="tab" data-tab="history" aria-selected="false" tabindex="-1" onclick="switchTab('history')">History</button>
-  <button class="tab" type="button" role="tab" data-tab="progress" aria-selected="false" tabindex="-1" onclick="switchTab('progress')">Progress</button>
+  <div class="main-col">
+    <header class="appbar" id="appbar">
+      <a class="brand mobile-only" href="main.html">
+        <span class="brand-mark">i</span>
+        <span class="brand-text"><span class="brand-name">IELTS Tracker</span><span class="brand-sub">New York Learning Center</span></span>
+      </a>
+      <div class="grow"></div>
+      <button class="icon-btn ghost" type="button" data-theme-toggle aria-label="Toggle theme"><svg class="ico theme-ico-light"><use href="icons/sprite.svg#i-moon"/></svg><svg class="ico theme-ico-dark"><use href="icons/sprite.svg#i-sun"/></svg></button>
+      <a class="icon-btn mobile-only" href="settings.html" aria-label="Settings"><svg class="ico"><use href="icons/sprite.svg#i-settings"/></svg></a>
+    </header>
+
+    <main class="content">
+      <!-- PROGRESS -->
+      <section class="page" id="page-progress" role="tabpanel" aria-label="Progress">
+        <div class="page-head">
+          <div>
+            <div class="eyebrow" id="greeting">Overview</div>
+            <h1 class="page-title">Your <em>progress</em></h1>
+          </div>
+          <button class="btn btn-sm desktop-only" type="button" data-go="add"><svg class="ico ico-sm"><use href="icons/sprite.svg#i-plus"/></svg>Log result</button>
+        </div>
+
+        <div id="dashEmpty" class="card empty-card" hidden>
+          <div class="empty-art" aria-hidden="true"><svg class="ico"><use href="icons/sprite.svg#i-chart-spline"/></svg></div>
+          <h2 class="serif empty-title">Nothing to chart yet</h2>
+          <p class="empty-text">Log your first mock or official test — your band trend, skill radar and focus tips will appear here.</p>
+          <button class="btn btn-primary" type="button" data-go="add"><svg class="ico ico-sm"><use href="icons/sprite.svg#i-plus"/></svg>Log first result</button>
+        </div>
+
+        <div class="dash" id="dash" hidden>
+          <article class="card hero" id="heroCard"></article>
+          <div class="kpis" id="kpiGrid"></div>
+
+          <article class="card chart-card" id="lineChartContainer">
+            <div class="card-head">
+              <div class="card-title"><svg class="ico"><use href="icons/sprite.svg#i-chart-spline"/></svg>Band trend</div>
+              <div class="head-actions">
+                <div class="seg" role="group" aria-label="Chart period" data-period-group="main">
+                  <button type="button" class="active" data-period="all">All</button>
+                  <button type="button" data-period="month">30d</button>
+                  <button type="button" data-period="week">7d</button>
+                </div>
+                <button class="icon-btn sm" type="button" id="expandChartBtn" aria-label="Expand chart"><svg class="ico ico-sm"><use href="icons/sprite.svg#i-maximize-2"/></svg></button>
+              </div>
+            </div>
+            <div class="legend" id="chartLegend"></div>
+            <div class="chart-box"><canvas id="lineChart"></canvas></div>
+          </article>
+
+          <article class="card radar-card">
+            <div class="card-head">
+              <div class="card-title"><svg class="ico"><use href="icons/sprite.svg#i-radar"/></svg>Skills radar</div>
+              <div class="radar-key"><span class="key latest">Latest</span><span class="key target">Target</span></div>
+            </div>
+            <div class="radar-box"><canvas id="radarChart"></canvas></div>
+          </article>
+
+          <article class="card compare-card">
+            <div class="card-head">
+              <div>
+                <div class="card-title"><svg class="ico"><use href="icons/sprite.svg#i-target"/></svg>Latest vs target</div>
+              </div>
+              <button class="btn btn-sm" type="button" id="editTargetsBtn"><svg class="ico ico-sm"><use href="icons/sprite.svg#i-sliders-horizontal"/></svg>Targets</button>
+            </div>
+            <div id="comparison"></div>
+          </article>
+
+          <article class="card tips-card">
+            <div class="card-head">
+              <div class="card-title"><svg class="ico"><use href="icons/sprite.svg#i-lightbulb"/></svg>Focus tips</div>
+              <button class="icon-btn sm ghost" type="button" id="shuffleTipsBtn" aria-label="Show other tips"><svg class="ico ico-sm"><use href="icons/sprite.svg#i-refresh-cw"/></svg></button>
+            </div>
+            <div id="tipsSection"></div>
+          </article>
+        </div>
+      </section>
+
+      <!-- LOG -->
+      <section class="page" id="page-add" role="tabpanel" aria-label="Log result">
+        <div class="page-head">
+          <div>
+            <div class="eyebrow" id="entryFormEyebrow">New entry</div>
+            <h1 class="page-title" id="entryFormTitle">Log a <em>result</em></h1>
+          </div>
+          <button class="btn btn-sm" id="cancelEditBtn" type="button" hidden><svg class="ico ico-sm"><use href="icons/sprite.svg#i-x"/></svg>Cancel edit</button>
+        </div>
+
+        <div class="log-grid">
+          <div class="card log-card">
+            <label class="field">
+              <span class="field-label"><svg class="ico ico-sm"><use href="icons/sprite.svg#i-calendar"/></svg>Test date</span>
+              <input type="text" id="entryDate" class="input" placeholder="Pick a date" readonly/>
+            </label>
+
+            <div class="skills" id="sliders"></div>
+          </div>
+
+          <div class="log-side">
+            <div class="card overall-card">
+              <div class="overall-top">
+                <div>
+                  <div class="eyebrow" id="overallLabel">Calculated overall</div>
+                  <div class="overall-value serif num" id="overallPreview">6.0</div>
+                </div>
+                <div class="overall-meter" id="overallMeter" aria-hidden="true"></div>
+              </div>
+
+              <div class="switch-row" id="overallToggleRow">
+                <div>
+                  <div class="switch-title">Official overall band</div>
+                  <div class="switch-sub">Use the band from your test report instead</div>
+                </div>
+                <button class="switch" type="button" role="switch" aria-checked="false" id="overallToggle" aria-label="Official overall band"><span></span></button>
+              </div>
+              <div id="overallSliderWrap" hidden></div>
+            </div>
+
+            <div class="card note-card">
+              <div class="switch-row">
+                <div>
+                  <div class="switch-title">Note</div>
+                  <div class="switch-sub">Optional — how did it go?</div>
+                </div>
+                <button class="switch" type="button" role="switch" aria-checked="false" id="moodToggle" aria-label="Add a note"><span></span></button>
+              </div>
+              <div class="mood-expand" id="moodExpand">
+                <div><textarea id="moodNote" class="input" rows="3" placeholder="e.g. Ran out of time in Reading Part 3…"></textarea></div>
+              </div>
+            </div>
+
+            <button class="btn btn-primary btn-block" id="saveEntryBtn" type="button"><svg class="ico"><use href="icons/sprite.svg#i-check"/></svg><span>Save result</span></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- HISTORY -->
+      <section class="page" id="page-history" role="tabpanel" aria-label="History">
+        <div class="page-head">
+          <div>
+            <div class="eyebrow" id="historyCount">0 results</div>
+            <h1 class="page-title">Test <em>history</em></h1>
+          </div>
+        </div>
+        <div class="history-toolbar">
+          <div class="seg" role="group" aria-label="History filter" id="historyFilters">
+            <button type="button" class="active history-filter" data-filter="all">All <span class="count" data-count="all">0</span></button>
+            <button type="button" class="history-filter" data-filter="official">Official <span class="count" data-count="official">0</span></button>
+            <button type="button" class="history-filter" data-filter="notes">With notes <span class="count" data-count="notes">0</span></button>
+          </div>
+        </div>
+        <div id="historyList" class="history-list"></div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<!-- Mobile bottom nav -->
+<nav class="bottombar" role="tablist" aria-label="Main">
+  <button class="bb-item tab" type="button" role="tab" data-tab="progress"><svg class="ico"><use href="icons/sprite.svg#i-layout-dashboard"/></svg><span>Progress</span></button>
+  <button class="bb-item bb-add tab" type="button" role="tab" data-tab="add" aria-label="Log result"><span class="bb-add-dot"><svg class="ico"><use href="icons/sprite.svg#i-plus"/></svg></span><span>Log</span></button>
+  <button class="bb-item tab" type="button" role="tab" data-tab="history"><svg class="ico"><use href="icons/sprite.svg#i-history"/></svg><span>History</span></button>
 </nav>
 
-<!-- LOG -->
-<section class="page" id="page-add">
-  <div class="panel">
-    <div class="panel-head">
-      <h2 class="panel-title" id="entryFormTitle">New test result</h2>
-      <button class="btn-text" id="cancelEditBtn" type="button" onclick="cancelEdit()" hidden>Cancel</button>
-    </div>
-
-    <label class="field">
-      <span class="field-label">Date</span>
-      <input type="date" id="entryDate"/>
-    </label>
-
-    <div id="sliders"></div>
-
-    <div class="toggle-row" onclick="toggleOverall()">
+<!-- Expanded chart -->
+<dialog class="chart-modal" id="chartModal" aria-label="Band trend">
+  <div class="chart-modal-inner">
+    <div class="card-head">
       <div>
-        <div class="toggle-title">I have my Overall band</div>
-        <div class="toggle-sub">Otherwise it is calculated from the four skills</div>
+        <div class="eyebrow">Band trend</div>
+        <div class="sheet-title">All skills over time</div>
       </div>
-      <div class="toggle-switch" id="overallToggle" aria-hidden="true">
-        <div class="toggle-knob"></div>
-      </div>
+      <button class="icon-btn" type="button" id="closeChartBtn" aria-label="Close"><svg class="ico"><use href="icons/sprite.svg#i-x"/></svg></button>
     </div>
+    <div class="modal-controls">
+      <div class="seg" role="group" aria-label="Expanded chart period" data-period-group="modal">
+        <button type="button" class="active" data-period="all">All time</button>
+        <button type="button" data-period="month">30 days</button>
+        <button type="button" data-period="week">7 days</button>
+      </div>
+      <div class="legend" id="modalLegend"></div>
+    </div>
+    <div class="modal-chart-box"><canvas id="modalChart"></canvas></div>
+  </div>
+</dialog>
 
-    <div id="overallSliderWrap" hidden></div>
-
-    <div class="toggle-row" onclick="toggleMood()">
+<!-- Targets sheet -->
+<dialog class="sheet" id="targetsSheet" aria-label="Target scores">
+  <div class="sheet-grip"></div>
+  <div class="sheet-body">
+    <div class="sheet-head">
       <div>
-        <div class="toggle-title">Add a note</div>
-        <div class="toggle-sub">Optional — how did it go?</div>
+        <div class="eyebrow">Goals</div>
+        <div class="sheet-title">Target scores</div>
       </div>
-      <span class="mood-chevron" id="moodArrow" aria-hidden="true">+</span>
+      <button class="icon-btn" type="button" data-close aria-label="Close"><svg class="ico"><use href="icons/sprite.svg#i-x"/></svg></button>
     </div>
-
-    <div class="mood-expand" id="moodExpand">
-      <textarea id="moodNote" placeholder="e.g. Ran out of time in Reading Part 3…"></textarea>
+    <div id="targets" class="skills"></div>
+    <div class="sheet-actions" style="margin-top:18px">
+      <button class="btn" type="button" id="resetTargetsBtn"><svg class="ico ico-sm"><use href="icons/sprite.svg#i-rotate-ccw"/></svg>Reset to 7.0</button>
+      <button class="btn btn-primary" type="button" data-close>Done</button>
     </div>
-
-    <button class="btn-primary" id="saveEntryBtn" type="button" onclick="addEntry()">Save result</button>
   </div>
-</section>
+</dialog>
 
-<!-- HISTORY -->
-<section class="page" id="page-history">
-  <div id="historyList"></div>
-</section>
-
-<!-- PROGRESS -->
-<section class="page" id="page-progress">
-  <div class="panel" id="progressSummary">
-    <p class="empty-inline">Add a test result to see your progress.</p>
-  </div>
-
-  <div class="panel">
-    <div class="panel-head">
-      <h2 class="panel-title">Target scores</h2>
-      <button class="btn-text" type="button" onclick="resetTargets()">Reset</button>
+<!-- Confirm dialog -->
+<dialog class="sheet" id="confirmDialog">
+  <div class="sheet-grip"></div>
+  <div class="sheet-body">
+    <div class="sheet-title" id="confirmTitle">Are you sure?</div>
+    <p class="sheet-text" id="confirmText" style="margin-top:8px"></p>
+    <div class="sheet-actions">
+      <button class="btn" type="button" id="confirmCancel">Cancel</button>
+      <button class="btn btn-primary" type="button" id="confirmOk">Confirm</button>
     </div>
-    <div id="targets"></div>
   </div>
-
-  <div class="panel" id="lineChartContainer">
-    <div class="panel-head">
-      <h2 class="panel-title">Progress over time</h2>
-    </div>
-    <div class="chart-period" role="group" aria-label="Chart period">
-      <button class="period-btn active" type="button" onclick="setPeriod('all', this)">All</button>
-      <button class="period-btn" type="button" onclick="setPeriod('month', this)">Month</button>
-      <button class="period-btn" type="button" onclick="setPeriod('week', this)">Week</button>
-    </div>
-    <canvas id="lineChart" height="180"></canvas>
-  </div>
-</section>
+</dialog>
 
 <div class="boot-status" id="bootStatus">Opening local database…</div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="vendor/chart.umd.min.js"></script>
+<script src="vendor/flatpickr/flatpickr.min.js"></script>
+<script src="vendor/countUp.umd.js"></script>
+<script src="vendor/auto-animate.min.js"></script>
 <script src="vendor/sqljs/sql-wasm.js"></script>
 <script src="js/db.js"></script>
+<script src="js/ui.js"></script>
 <script src="js/scripts.js"></script>
 <script>
 if ('serviceWorker' in navigator) {

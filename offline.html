@@ -4,100 +4,45 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <title>Offline | IELTS Tracker</title>
+  <meta name="theme-color" content="#F4F3EE">
+  <link rel="icon" href="icons/icon-192.png">
   <script src="js/theme.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="css/theme-light.css"/>
+  <link rel="stylesheet" href="css/app.css"/>
   <style>
-    :root {
-      --bg: #0E141C;
-      --bg-wash: #15202B;
-      --surface: rgba(255,255,255,.04);
-      --surface-solid: #16202A;
-      --border: rgba(240,244,248,.1);
-      --text: #F0F4F8;
-      --muted: #8B97A8;
-      --accent: #2DD4BF;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      min-height: 100vh;
-      max-width: 430px;
-      margin: 0 auto;
-      padding: 48px 24px;
-      background:
-        radial-gradient(ellipse 80% 50% at 10% -10%, rgba(45,212,191,.12), transparent 55%),
-        linear-gradient(180deg, var(--bg-wash), var(--bg));
-      color: var(--text);
-      font-family: 'Outfit', sans-serif;
-      display: grid;
-      align-content: center;
-    }
-    h1 {
-      font-family: 'DM Serif Display', serif;
-      font-size: 2.2rem;
-      font-weight: 400;
-      letter-spacing: -.02em;
-      line-height: 1.1;
-      margin-bottom: 12px;
-    }
-    p {
-      color: var(--muted);
-      font-size: 15px;
-      line-height: 1.5;
-      margin-bottom: 24px;
-      max-width: 30ch;
-    }
-    .status {
-      display: inline-block;
-      margin-bottom: 18px;
-      font-size: 12px;
-      letter-spacing: .06em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-    .status.online { color: var(--accent); }
-    .actions { display: flex; flex-wrap: wrap; gap: 8px; }
-    .btn {
-      appearance: none;
-      border: 1px solid var(--border);
-      background: var(--surface-solid);
-      color: var(--text);
-      border-radius: 10px;
-      padding: 10px 14px;
-      font-family: 'Outfit', sans-serif;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      text-decoration: none;
-    }
-    .btn.primary {
-      background: #0F766E;
-      border-color: #0F766E;
-      color: #fff;
-    }
+    body { display: grid; place-items: center; padding: 32px 20px; }
+    .off { width: 100%; max-width: 400px; text-align: center; display: grid; justify-items: center; gap: 12px; animation: rise .4s cubic-bezier(.2,.8,.2,1); }
+    .off-art { width: 72px; height: 72px; border-radius: 22px; display: grid; place-items: center; background: var(--ink); color: var(--signal); margin-bottom: 6px; }
+    .off-art .ico { width: 30px; height: 30px; }
+    .off h1 { font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 44px; line-height: 1; }
+    .off h1 em { color: var(--muted); }
+    .off p { color: var(--muted); max-width: 32ch; margin-bottom: 10px; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+    .pill.online { background: var(--good-bg); color: var(--good); }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
   </style>
 </head>
 <body>
-  <main>
-    <div class="status" id="liveState">Offline</div>
-    <h1>You're offline</h1>
-    <p>Saved results stay on this device. Reconnect when you can, or open the tracker from cache.</p>
+  <main class="off">
+    <div class="off-art"><svg class="ico"><use href="icons/sprite.svg#i-wifi-off"/></svg></div>
+    <span class="pill" id="liveState"><span class="dot"></span><span>Offline</span></span>
+    <h1>You're <em>offline</em></h1>
+    <p>Your results are saved on this device. Open the tracker from cache, or reconnect and try again.</p>
     <div class="actions">
-      <a class="btn primary" href="main.html">Open tracker</a>
-      <button class="btn" type="button" onclick="checkConnection()">Check connection</button>
+      <a class="btn btn-primary" href="main.html"><svg class="ico ico-sm"><use href="icons/sprite.svg#i-layout-dashboard"/></svg>Open tracker</a>
+      <button class="btn" type="button" id="checkBtn"><svg class="ico ico-sm"><use href="icons/sprite.svg#i-refresh-cw"/></svg>Check connection</button>
     </div>
   </main>
   <script>
-    const liveState = document.getElementById('liveState');
+    const live = document.getElementById('liveState');
     function updateStatus() {
       const online = navigator.onLine;
-      liveState.textContent = online ? 'Online' : 'Offline';
-      liveState.classList.toggle('online', online);
+      live.querySelector('span:last-child').textContent = online ? 'Online' : 'Offline';
+      live.classList.toggle('online', online);
     }
-    function checkConnection() {
+    document.getElementById('checkBtn').addEventListener('click', () => {
       updateStatus();
       if (navigator.onLine) location.href = 'main.html';
-    }
+    });
     window.addEventListener('online', updateStatus);
     window.addEventListener('offline', updateStatus);
     updateStatus();

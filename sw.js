@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = 'ielts-tracker-v9';
+const CACHE_NAME = 'ielts-tracker-v10';
 const OFFLINE_URL = '/offline.html';
 const APP_SHELL = [
   '/',
@@ -6,16 +6,26 @@ const APP_SHELL = [
   '/settings.html',
   OFFLINE_URL,
   '/manifest.json',
-  '/css/styles.css',
+  '/css/app.css',
+  '/css/main.css',
   '/css/settings.css',
-  '/css/theme-light.css',
+  '/js/theme.js',
+  '/js/ui.js',
+  '/js/db.js',
   '/js/scripts.js',
   '/js/settings.js',
-  '/js/theme.js',
-  '/js/db.js',
   '/vendor/chart.umd.min.js',
+  '/vendor/flatpickr/flatpickr.min.js',
+  '/vendor/flatpickr/flatpickr.min.css',
+  '/vendor/countUp.umd.js',
+  '/vendor/auto-animate.min.js',
   '/vendor/sqljs/sql-wasm.js',
   '/vendor/sqljs/sql-wasm.wasm',
+  '/vendor/fonts/geist-latin-wght-normal.woff2',
+  '/vendor/fonts/geist-mono-latin-wght-normal.woff2',
+  '/vendor/fonts/instrument-serif-latin-400-normal.woff2',
+  '/vendor/fonts/instrument-serif-latin-400-italic.woff2',
+  '/icons/sprite.svg',
   '/icons/icon-192.png',
   '/icons/icon-512.png'
 ];

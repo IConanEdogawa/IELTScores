@@ -263,8 +263,13 @@
     setMeta('targets', targets);
   }
 
+  function isReady() {
+    return !!db;
+  }
+
   global.IeltsDB = {
     init,
+    isReady,
     listEntries,
     replaceAllEntries,
     upsertEntry,
