@@ -1,24 +1,21 @@
-﻿const CACHE_NAME = 'ielts-tracker-v7';
+﻿const CACHE_NAME = 'ielts-tracker-v9';
 const OFFLINE_URL = '/offline.html';
 const APP_SHELL = [
   '/',
   '/main.html',
-  '/about.html',
   '/settings.html',
-  '/theme-browser.html',
   OFFLINE_URL,
   '/manifest.json',
   '/css/styles.css',
-  '/css/about.css',
   '/css/settings.css',
   '/css/theme-light.css',
-  '/css/theme-browser.css',
   '/js/scripts.js',
-  '/js/about.js',
   '/js/settings.js',
   '/js/theme.js',
-  '/js/theme-browser.js',
+  '/js/db.js',
   '/vendor/chart.umd.min.js',
+  '/vendor/sqljs/sql-wasm.js',
+  '/vendor/sqljs/sql-wasm.wasm',
   '/icons/icon-192.png',
   '/icons/icon-512.png'
 ];
@@ -93,4 +90,3 @@ self.addEventListener('fetch', event => {
     })
   );
 });
-

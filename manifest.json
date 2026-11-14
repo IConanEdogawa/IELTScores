@@ -1,13 +1,13 @@
 ﻿{
-  "name": "IELTS Tracker - NY LC",
+  "name": "IELTS Tracker",
   "short_name": "IELTS",
   "description": "Track IELTS progress across listening, reading, writing and speaking.",
   "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#0A0E1A",
-  "theme_color": "#9B1C2E",
+  "background_color": "#E8EEF4",
+  "theme_color": "#0F766E",
   "icons": [
     {
       "src": "icons/icon-192.png",
