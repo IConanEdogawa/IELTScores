@@ -4,13 +4,13 @@
   function getStoredTheme() {
     try {
       const raw = localStorage.getItem(SETTINGS_KEY);
-      if (!raw) return 'system';
+      if (!raw) return 'light';
       const parsed = JSON.parse(raw);
       const theme = parsed?.theme;
-      if (theme === 'light' || theme === 'dark') return theme;
-      return 'system';
+      if (theme === 'light' || theme === 'dark' || theme === 'system') return theme;
+      return 'light';
     } catch {
-      return 'system';
+      return 'light';
     }
   }
 
@@ -25,6 +25,8 @@
     const stored = getStoredTheme();
     const resolved = resolveTheme(stored);
     document.documentElement.setAttribute('data-theme', resolved);
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', resolved === 'light' ? '#E8EEF4' : '#0E141C');
     if (previous && previous !== resolved) {
       window.dispatchEvent(new CustomEvent('themechange', { detail: { theme: resolved } }));
     }

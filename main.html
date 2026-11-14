@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <title>IELTS Tracker</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#9B1C2E">
+<meta name="theme-color" content="#0F766E">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <script src="js/theme.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
@@ -14,186 +14,99 @@
 </head>
 <body>
 
-<!-- HEADER -->
-<div class="header">
-  <div class="header-links">
-    <a class="header-link" href="settings.html">Settings</a>
-    <a class="header-link about-link" href="about.html">About</a>
-  </div>
-  <div class="nylc-brand">
-    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- Torch flame -->
-      <ellipse cx="16" cy="5" rx="3" ry="4.5" fill="var(--nylc-light)" opacity=".9"/>
-      <ellipse cx="16" cy="4.5" rx="1.5" ry="2.5" fill="#F5C842"/>
-      <!-- Torch handle -->
-      <rect x="14.5" y="8" width="3" height="7" rx="1" fill="white"/>
-      <!-- Crown spikes -->
-      <polygon points="9,14 11,10 13,14" fill="white"/>
-      <polygon points="12,13 14,9 16,13" fill="white"/>
-      <polygon points="15,13 17,9 19,13" fill="white"/>
-      <polygon points="18,13 20,10 22,14" fill="white"/>
-      <!-- Head/body -->
-      <ellipse cx="16" cy="15" rx="4" ry="3" fill="white"/>
-      <path d="M10 18 Q10 28 16 29 Q22 28 22 18 Q19 16 16 16 Q13 16 10 18Z" fill="white"/>
-      <!-- Tablet -->
-      <rect x="11" y="20" width="5" height="3.5" rx="1" fill="var(--nylc)" opacity=".6"/>
-    </svg>
-    <div class="nylc-name">New York <span>Learning Center</span></div>
-  </div>
-  <div class="badge"><span class="badge-dot"></span>IELTS Tracker</div>
-  <h1>Track your<br/><em>progress.</em></h1>
-  <p>Log your scores, spot your weak points, and watch yourself improve.</p>
-</div>
+<header class="header">
+  <a class="settings-link" href="settings.html">Settings</a>
+  <h1 class="brand">IELTS Tracker</h1>
+  <p class="tagline">Log your scores and watch the gap to your target close.</p>
+</header>
 
-<!-- TABS -->
-<div class="tabs">
-  <button class="tab active" type="button" role="tab" aria-selected="true" tabindex="0" onclick="switchTab('add')">Add Entry</button>
-  <button class="tab" type="button" role="tab" aria-selected="false" tabindex="-1" onclick="switchTab('history')">History</button>
-  <button class="tab" type="button" role="tab" aria-selected="false" tabindex="-1" onclick="switchTab('charts')">Insights</button>
-</div>
+<nav class="tabs" role="tablist" aria-label="Main">
+  <button class="tab" type="button" role="tab" data-tab="add" aria-selected="false" tabindex="-1" onclick="switchTab('add')">Log</button>
+  <button class="tab" type="button" role="tab" data-tab="history" aria-selected="false" tabindex="-1" onclick="switchTab('history')">History</button>
+  <button class="tab" type="button" role="tab" data-tab="progress" aria-selected="false" tabindex="-1" onclick="switchTab('progress')">Progress</button>
+</nav>
 
-<!-- PAGE: ADD ENTRY -->
-<div class="page active" id="page-add">
-  <div class="card">
-    <div class="card-title-row">
-      <div class="card-title" id="entryFormTitle">New Test Result</div>
-      <button class="btn-inline" id="cancelEditBtn" type="button" onclick="cancelEdit()" style="display:none">Cancel edit</button>
+<!-- LOG -->
+<section class="page" id="page-add">
+  <div class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title" id="entryFormTitle">New test result</h2>
+      <button class="btn-text" id="cancelEditBtn" type="button" onclick="cancelEdit()" hidden>Cancel</button>
     </div>
 
-    <div class="date-row">
-      <div class="date-label">Date</div>
+    <label class="field">
+      <span class="field-label">Date</span>
       <input type="date" id="entryDate"/>
-    </div>
+    </label>
 
-    <!-- Sliders -->
     <div id="sliders"></div>
 
-    <!-- Overall toggle -->
     <div class="toggle-row" onclick="toggleOverall()">
       <div>
-        <div style="font-size:14px;font-weight:500;margin-bottom:2px">I have my Overall band</div>
-        <div class="toggle-label">Enable to enter manually, otherwise auto-calculated</div>
+        <div class="toggle-title">I have my Overall band</div>
+        <div class="toggle-sub">Otherwise it is calculated from the four skills</div>
       </div>
-      <div class="toggle-switch" id="overallToggle">
+      <div class="toggle-switch" id="overallToggle" aria-hidden="true">
         <div class="toggle-knob"></div>
       </div>
     </div>
 
-    <div id="overallSliderWrap" style="display:none;margin-bottom:20px"></div>
+    <div id="overallSliderWrap" hidden></div>
 
-    <!-- Mood toggle -->
-    <div class="mood-toggle-row" onclick="toggleMood()" style="margin-bottom:20px">
+    <div class="toggle-row" onclick="toggleMood()">
       <div>
-        <div style="font-size:14px;font-weight:500;margin-bottom:2px;color:var(--text)">Add a note</div>
-        <div class="toggle-label">How did it go? Optional comment</div>
+        <div class="toggle-title">Add a note</div>
+        <div class="toggle-sub">Optional — how did it go?</div>
       </div>
-      <div style="font-size:18px" id="moodArrow">💬</div>
+      <span class="mood-chevron" id="moodArrow" aria-hidden="true">+</span>
     </div>
 
     <div class="mood-expand" id="moodExpand">
-      <div class="mood-inner">
-        <textarea id="moodNote" placeholder="e.g. Felt confident in speaking, but ran out of time in reading..."></textarea>
-      </div>
+      <textarea id="moodNote" placeholder="e.g. Ran out of time in Reading Part 3…"></textarea>
     </div>
 
-    <button class="btn-add" id="saveEntryBtn" onclick="addEntry()">Save Result</button>
+    <button class="btn-primary" id="saveEntryBtn" type="button" onclick="addEntry()">Save result</button>
   </div>
+</section>
 
-</div>
-
-<!-- PAGE: HISTORY -->
-<div class="page" id="page-history">
-  <div class="history-toolbar">
-    <div class="history-filters">
-      <button class="history-filter active" type="button" onclick="setHistoryFilter('all', this)">All</button>
-      <button class="history-filter" type="button" onclick="setHistoryFilter('official', this)">Official</button>
-      <button class="history-filter" type="button" onclick="setHistoryFilter('notes', this)">With notes</button>
-    </div>
-    <div class="history-actions">
-      <button class="btn-inline" type="button" onclick="exportEntries('json')">Export JSON</button>
-      <button class="btn-inline" type="button" onclick="exportEntries('csv')">Export CSV</button>
-      <button class="btn-inline" type="button" onclick="document.getElementById('importFile').click()">Import</button>
-      <input type="file" id="importFile" accept=".json,application/json" onchange="importEntries(event)" hidden />
-    </div>
-  </div>
+<!-- HISTORY -->
+<section class="page" id="page-history">
   <div id="historyList"></div>
-</div>
+</section>
 
-<!-- CHART MODAL -->
-<div class="chart-modal-overlay" id="chartModal">
-  <div class="chart-modal-header">
-    <div class="chart-modal-title">Progress Over Time</div>
-    <div class="chart-modal-close" onclick="closeChartModal()">&#x2715;</div>
-  </div>
-  <div class="chart-modal-period">
-    <button class="period-btn active" onclick="setModalPeriod('all',this)">All</button>
-    <button class="period-btn" onclick="setModalPeriod('month',this)">Month</button>
-    <button class="period-btn" onclick="setModalPeriod('week',this)">Week</button>
-  </div>
-  <div class="chart-modal-body">
-    <canvas id="lineChartModal"></canvas>
-  </div>
-</div>
-
-<!-- PAGE: CHARTS -->
-<div class="page" id="page-charts">
-  <div class="kpi-grid" id="kpiGrid"></div>
-
-  <div class="chart-container" id="comparisonCard">
-    <div class="chart-label">Latest Comparison</div>
-    <div id="comparisonSummary"></div>
+<!-- PROGRESS -->
+<section class="page" id="page-progress">
+  <div class="panel" id="progressSummary">
+    <p class="empty-inline">Add a test result to see your progress.</p>
   </div>
 
-  <div class="chart-container" id="targetsCard">
-    <div class="card-title-row">
-      <div class="card-title">Target Scores</div>
-      <button class="btn-inline" type="button" onclick="resetTargets()">Reset</button>
+  <div class="panel">
+    <div class="panel-head">
+      <h2 class="panel-title">Target scores</h2>
+      <button class="btn-text" type="button" onclick="resetTargets()">Reset</button>
     </div>
     <div id="targets"></div>
   </div>
 
-  <div class="chart-container" id="lineChartContainer">
-    <div class="chart-label">
-      <span>Progress Over Time</span>
-      <button class="btn-expand-chart" onclick="openChartModal()">&#x2922; Expand</button>
+  <div class="panel" id="lineChartContainer">
+    <div class="panel-head">
+      <h2 class="panel-title">Progress over time</h2>
     </div>
-    <div class="chart-period" style="margin-bottom:16px">
-      <button class="period-btn active" onclick="setPeriod('all',this)">All</button>
-      <button class="period-btn" onclick="setPeriod('month',this)">Month</button>
-      <button class="period-btn" onclick="setPeriod('week',this)">Week</button>
+    <div class="chart-period" role="group" aria-label="Chart period">
+      <button class="period-btn active" type="button" onclick="setPeriod('all', this)">All</button>
+      <button class="period-btn" type="button" onclick="setPeriod('month', this)">Month</button>
+      <button class="period-btn" type="button" onclick="setPeriod('week', this)">Week</button>
     </div>
     <canvas id="lineChart" height="180"></canvas>
   </div>
+</section>
 
-  <div class="chart-container" id="radarCard">
-    <div class="chart-label">Skills Radar</div>
-    <div class="radar-wrap">
-      <canvas id="radarChart"></canvas>
-    </div>
-  </div>
-
-  <div id="tipsSection"></div>
-
-  <!-- AI Tips -->
-  <div class="ai-tips-card" id="aiTipsCard" style="display:none">
-    <div class="ai-tips-header">
-      <div class="ai-tips-icon">&#x2726;</div>
-      <div>
-        <div class="ai-tips-title">AI Coach</div>
-        <div class="ai-tips-sub">Personalized analysis</div>
-      </div>
-    </div>
-    <button class="btn-ai-tips" id="btnAiTips" onclick="fetchAiTips()">
-      <span>&#x2726;</span> Analyse my progress
-    </button>
-    <div class="ai-tips-result" id="aiTipsResult" style="display:none"></div>
-  </div>
-
-</div>
-
-<div class="toast" id="toast"></div>
+<div class="boot-status" id="bootStatus">Opening local database…</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="vendor/chart.umd.min.js"></script>
+<script src="vendor/sqljs/sql-wasm.js"></script>
+<script src="js/db.js"></script>
 <script src="js/scripts.js"></script>
 <script>
 if ('serviceWorker' in navigator) {

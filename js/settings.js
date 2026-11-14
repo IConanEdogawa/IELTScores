@@ -1,39 +1,23 @@
 const SETTINGS_KEY = 'nylc_ielts_settings';
-const DEFAULT_SETTINGS = {
-  theme: 'system',
-  insights: {
-    showKpis: true,
-    showComparison: true,
-    showTargets: true,
-    showProgress: true,
-    showRadar: true,
-    showTips: true,
-    showAiCoach: false,
-  }
-};
-
-const INSIGHT_OPTIONS = [
-  { key: 'showKpis', title: 'KPI Cards', desc: 'Latest, average, and trend cards' },
-  { key: 'showComparison', title: 'Latest Comparison', desc: 'Weakest area and gap to target' },
-  { key: 'showTargets', title: 'Target Scores', desc: 'Target sliders for each IELTS skill' },
-  { key: 'showProgress', title: 'Progress Chart', desc: 'Timeline chart with period filters' },
-  { key: 'showRadar', title: 'Skills Radar', desc: 'Average profile radar chart' },
-  { key: 'showTips', title: 'Tips Section', desc: 'Tips based on weakest skills' },
-  { key: 'showAiCoach', title: 'AI Coach', desc: 'Coming soon', locked: true },
+const DEFAULT_SETTINGS = { theme: 'light' };
+const SECTIONS = [
+  { key: 'listening' },
+  { key: 'reading' },
+  { key: 'writing' },
+  { key: 'speaking' },
 ];
 
 const SUPPORT_HANDLE = '@Bro_Zuck';
 const SUPPORT_URL = 'https://t.me/Bro_Zuck';
 let deferredInstallPrompt = null;
+let settings = loadLocalThemeSettings();
+let dbReady = false;
 
-let settings = loadSettings();
-
-renderInsightToggles();
 bindThemeSelect();
-initThemeBrowserHint();
 initSupportHint();
 initUpdateStatus();
 initInstallStatus();
+bootDb();
 
 window.addEventListener('beforeinstallprompt', event => {
   event.preventDefault();
@@ -47,6 +31,17 @@ window.addEventListener('appinstalled', () => {
   showToast('App installed');
 });
 
+async function bootDb() {
+  try {
+    await IeltsDB.init();
+    dbReady = true;
+    setDataHint('SQLite ready on this device.');
+  } catch {
+    setDataHint('Could not open SQLite database.');
+    showToast('Database failed to open');
+  }
+}
+
 function goBack() {
   if (window.history.length > 1) {
     window.history.back();
@@ -55,113 +50,41 @@ function goBack() {
   window.location.href = 'main.html';
 }
 
-function normalizeSettings(raw) {
-  const safe = {
-    theme: raw?.theme === 'light' || raw?.theme === 'dark' ? raw.theme : 'system',
-    insights: {}
-  };
-
-  for (const option of INSIGHT_OPTIONS) {
-    if (option.locked) {
-      safe.insights[option.key] = false;
-      continue;
-    }
-    safe.insights[option.key] = raw?.insights?.[option.key] !== false;
-  }
-  return safe;
-}
-
-function loadSettings() {
+function loadLocalThemeSettings() {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
-    if (!raw) return normalizeSettings(DEFAULT_SETTINGS);
-    return normalizeSettings(JSON.parse(raw));
+    if (!raw) return { ...DEFAULT_SETTINGS };
+    const parsed = JSON.parse(raw);
+    const theme = parsed?.theme === 'light' || parsed?.theme === 'dark' || parsed?.theme === 'system'
+      ? parsed.theme
+      : 'light';
+    return { theme };
   } catch {
-    return normalizeSettings(DEFAULT_SETTINGS);
+    return { ...DEFAULT_SETTINGS };
   }
 }
 
-function saveSettings() {
+function saveLocalThemeSettings() {
   try {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
   } catch {}
-}
-
-function renderInsightToggles() {
-  const wrap = document.getElementById('insightsToggles');
-  if (!wrap) return;
-
-  wrap.innerHTML = INSIGHT_OPTIONS.map(option => {
-    const isOn = settings.insights[option.key];
-    const isLocked = option.locked === true;
-    return `
-      <div class="toggle-row">
-        <div class="toggle-meta">
-          <div class="toggle-title">${option.title}</div>
-          <div class="toggle-desc">${option.desc}</div>
-        </div>
-        <button
-          class="toggle-switch ${isOn ? 'on' : ''}"
-          type="button"
-          aria-label="Toggle ${option.title}"
-          aria-pressed="${isOn ? 'true' : 'false'}"
-          ${isLocked ? 'disabled title="Coming soon"' : ''}
-          onclick="toggleInsight('${option.key}')"></button>
-      </div>
-    `;
-  }).join('');
-}
-
-function toggleInsight(key) {
-  const option = INSIGHT_OPTIONS.find(item => item.key === key);
-  if (option?.locked) {
-    showToast('AI Coach coming soon');
-    return;
+  if (dbReady) {
+    try { IeltsDB.saveSettings(settings); } catch {}
   }
-  settings.insights[key] = !settings.insights[key];
-  saveSettings();
-  renderInsightToggles();
-  showToast('Insights setting saved');
 }
 
 function bindThemeSelect() {
   const select = document.getElementById('themeSelect');
   if (!select) return;
   select.value = settings.theme;
-  select.addEventListener('change', function() {
+  select.addEventListener('change', function () {
     settings.theme = this.value;
-    saveSettings();
+    saveLocalThemeSettings();
     if (typeof window.__applyThemeFromSettings === 'function') {
       window.__applyThemeFromSettings();
     }
-    showToast('Theme preference saved');
+    showToast('Theme saved');
   });
-}
-
-function initThemeBrowserHint() {
-  const hint = document.getElementById('themeHint');
-  if (!hint) return;
-  if (!isStandalonePwa()) {
-    hint.textContent = 'Theme Browser is available in the installed app only.';
-    return;
-  }
-  if (!navigator.onLine) {
-    hint.textContent = 'Connect to internet to browse theme samples.';
-    return;
-  }
-  hint.textContent = 'Changes apply immediately. Theme Browser is ready.';
-}
-
-function openThemeBrowser() {
-  if (!isStandalonePwa()) {
-    showToast('Theme Browser is available in the installed app');
-    return;
-  }
-  if (!navigator.onLine) {
-    showToast('Connect to internet to browse themes');
-    return;
-  }
-  window.location.href = 'theme-browser.html';
 }
 
 function initSupportHint() {
@@ -179,7 +102,8 @@ function buildDiagnostics() {
     `online=${navigator.onLine}`,
     `mode=${mode}`,
     `service_worker_supported=${'serviceWorker' in navigator}`,
-    `theme_pref=${settings.theme}`
+    `theme_pref=${settings.theme}`,
+    `sqlite_ready=${dbReady}`
   ].join('\n');
 }
 
@@ -194,7 +118,6 @@ async function copyDiagnostics() {
 }
 
 async function contactSupport() {
-  // Use direct navigation so the action works reliably on mobile and in-app browsers.
   window.location.href = SUPPORT_URL;
 }
 
@@ -245,7 +168,7 @@ function initInstallStatus() {
   }
 
   if (isIosLike()) {
-    status.textContent = 'On iPhone/iPad: Share -> Add to Home Screen.';
+    status.textContent = 'On iPhone/iPad: Share → Add to Home Screen.';
     return;
   }
 
@@ -273,15 +196,20 @@ async function installApp() {
   }
 
   if (isIosLike()) {
-    showToast('Use Share -> Add to Home Screen');
+    showToast('Use Share → Add to Home Screen');
   } else {
-    showToast('Use browser menu -> Install app');
+    showToast('Use browser menu → Install app');
   }
 }
 
 function setUpdateStatus(message) {
   const status = document.getElementById('updateStatus');
   if (status) status.textContent = message;
+}
+
+function setDataHint(message) {
+  const hint = document.getElementById('dataHint');
+  if (hint) hint.textContent = message;
 }
 
 async function checkForUpdates() {
@@ -339,6 +267,109 @@ async function checkForUpdates() {
     setUpdateStatus('Update check failed. Try again in a moment.');
   } finally {
     btn.disabled = false;
+  }
+}
+
+function isValidDateString(value) {
+  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+function clampBand(value) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return null;
+  return Math.min(9, Math.max(0, Math.round(num * 2) / 2));
+}
+
+function normalizeEntry(raw) {
+  if (!raw || !isValidDateString(raw.date)) return null;
+
+  const entry = {
+    date: raw.date,
+    manualOverall: !!raw.manualOverall,
+    mood: String(raw.mood || '').trim(),
+  };
+
+  let sum = 0;
+  for (const section of SECTIONS) {
+    const safe = clampBand(raw[section.key]);
+    if (safe === null) return null;
+    entry[section.key] = safe;
+    sum += safe;
+  }
+
+  const rawOverall = clampBand(raw.overall);
+  entry.overall = rawOverall === null ? Math.round((sum / 4) * 2) / 2 : rawOverall;
+  return entry;
+}
+
+function exportEntries() {
+  if (!dbReady) {
+    setDataHint('Database is still opening.');
+    showToast('Database not ready');
+    return;
+  }
+
+  const entries = IeltsDB.listEntries();
+  if (!entries.length) {
+    setDataHint('No entries to export yet.');
+    showToast('No entries to export');
+    return;
+  }
+
+  const content = JSON.stringify(entries, null, 2);
+  const blob = new Blob([content], { type: 'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'ielts-tracker-export.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  setDataHint(`Exported ${entries.length} entries from SQLite.`);
+  showToast('Export complete');
+}
+
+async function importEntries(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  if (!dbReady) {
+    setDataHint('Database is still opening.');
+    showToast('Database not ready');
+    event.target.value = '';
+    return;
+  }
+
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if (!Array.isArray(data)) throw new Error('Invalid JSON structure');
+
+    const dedup = new Map();
+    let skipped = 0;
+
+    for (const rawItem of data) {
+      const normalized = normalizeEntry(rawItem);
+      if (!normalized) {
+        skipped += 1;
+        continue;
+      }
+      dedup.set(normalized.date, normalized);
+    }
+
+    const normalized = Array.from(dedup.values()).sort((a, b) => a.date.localeCompare(b.date));
+    if (!normalized.length) throw new Error('No valid entries found');
+
+    IeltsDB.replaceAllEntries(normalized);
+    await IeltsDB.persistNow();
+    setDataHint(`Imported ${normalized.length} entries${skipped ? `, skipped ${skipped}` : ''}.`);
+    showToast('Import complete');
+  } catch {
+    setDataHint('Import failed. Use a valid JSON export.');
+    showToast('Import failed');
+  } finally {
+    event.target.value = '';
   }
 }
 
